@@ -1,4 +1,4 @@
-# Libdw
+# Libdw  [![Build Status](https://api.travis-ci.org/bitcraze/libdw1000.svg)](https://travis-ci.org/bitcraze/libdw1000)
 
 Open source driver implementation for the Decawave DW1000 UWB radio chip
 
@@ -125,6 +125,42 @@ To put the radio in IDLE mode (cancel current send/receive)
 ``` c
 dwIdle(dev);
 ```
+
+## Testing
+
+### Dependencies
+
+Frameworks for unit testing are pulled in as git submodules. To get them when cloning
+
+```bash
+git clone --recursive https://github.com/bitcraze/lps-node-firmware.git
+```
+        
+or if you already have a cloned repo and want the submodules
+ 
+```bash
+git submodule init        
+git submodule update        
+```
+
+The testing framework uses ruby and rake to generate and run code. 
+
+To minimize the need for installations and configuration, use the docker builder
+image (bitcraze/builder) that contains all tools needed. All scripts in the 
+tools/build directory are intended to be run in the image. You may use the 
+utility script tools/do to start the docker container. For instance
+ 
+        tools/do build
+
+### Running unit tests
+    
+With the environment set up locally
+
+        rake
+
+with the docker builder image
+
+        tools/do test
 
 
 
