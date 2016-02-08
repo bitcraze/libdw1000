@@ -297,6 +297,11 @@ void dwWriteTransmitFrameControlRegister(dwDevice_t* dev) {
 
 /******************************************************************/
 
+void dwSetReceiveWaitTimeout(dwDevice_t *dev, uint16_t timeout) {
+  dwSpiWrite(dev, RX_FWTO, NO_SUB, &timeout, 2);
+  setBit(dev->syscfg, LEN_SYS_CFG, RXWTOE_BIT, timeout!=0);
+}
+
 void dwSetFrameFilter(dwDevice_t* dev, bool val) {
 	setBit(dev->syscfg, LEN_SYS_CFG, FFEN_BIT, val);
 }
@@ -595,6 +600,7 @@ void dwSetDefaults(dwDevice_t* dev) {
     //setFrameFilterAllowAcknowledgement(true);
 		dwInterruptOnSent(dev, true);
 		dwInterruptOnReceived(dev, true);
+    dwInterruptOnReceiveTimeout(dev, true);
 		dwInterruptOnReceiveFailed(dev, false);
 		dwInterruptOnReceiveTimestampAvailable(dev, false);
 		dwInterruptOnAutomaticAcknowledgeTrigger(dev, false);
@@ -673,8 +679,8 @@ void dwCorrectTimestamp(dwDevice_t* dev, dwTime_t* timestamp) {
 		rxPowerBaseHigh = 17;
 	}
 	// select range low/high values from corresponding table
-	int rangeBiasHigh;
-	int rangeBiasLow;
+	int rangeBiasHigh = 0;
+	int rangeBiasLow = 0;
 	if(dev->channel == CHANNEL_4 || dev->channel == CHANNEL_7) {
 		// 900 MHz receiver bandwidth
 		if(dev->pulseFrequency == TX_PULSE_FREQ_16MHZ) {
@@ -1234,7 +1240,6 @@ void dwTune(dwDevice_t *dev) {
 // FIXME: This is a test!
 void (*_handleError)(void) = dummy;
 void (*_handleReceiveFailed)(void) = dummy;
-void (*_handleReceiveTimeout)(void) = dummy;
 void (*_handleReceiveTimestampAvailable)(void) = dummy;
 
 void dwHandleInterrupt(dwDevice_t *dev) {
@@ -1258,8 +1263,8 @@ void dwHandleInterrupt(dwDevice_t *dev) {
 			dwNewReceive(dev);
 			dwStartReceive(dev);
 		}
-	} else if(dwIsReceiveTimeout(dev) && _handleReceiveTimeout != 0) {
-		(*_handleReceiveTimeout)();
+	} else if(dwIsReceiveTimeout(dev) && dev->handleReceiveTimeout != 0) {
+		(*dev->handleReceiveTimeout)(dev);
 		dwClearReceiveStatus(dev);
 		if(dev->permanentReceive) {
 			dwNewReceive(dev);
@@ -1285,6 +1290,10 @@ void dwAttachSentHandler(dwDevice_t *dev, dwHandler_t handler)
 void dwAttachReceivedHandler(dwDevice_t *dev, dwHandler_t handler)
 {
   dev->handleReceived = handler;
+}
+
+void dwAttachReceiveTimeoutHandler(dwDevice_t *dev, dwHandler_t handler) {
+  dev->handleReceiveTimeout = handler;
 }
 
 float getFirstPathPower(dwDevice_t *dev) {
@@ -1357,10 +1366,6 @@ void dwSpiRead(dwDevice_t *dev, uint8_t regid, uint32_t address,
   size_t headerLength=1;
 
   header[0] = regid & 0x3f;
-
-   /*asm (" MOVS r0, #1 \n"
-   " LDM r0,{r1-r2} \n"
-   " BX LR; \n");*/
 
   if (address != 0) {
     header[0] |= 0x40;

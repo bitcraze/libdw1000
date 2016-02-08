@@ -80,6 +80,7 @@ typedef struct dwDevice_s {
   // Callback handles
   dwHandler_t handleSent;
   dwHandler_t handleReceived;
+  dwHandler_t handleReceiveTimeout;
 } dwDevice_t;
 
 typedef enum {dwSpiSpeedLow, dwSpiSpeedHigh} dwSpiSpeed_t;
@@ -193,6 +194,18 @@ void dwWriteTransmitFrameControlRegister(dwDevice_t* dev);
 
 /****************************************************************/
 
+/**
+ * Set Receive Wait Timeout.
+ * @param timeout Timeout in step of 1.026us (512 count of the dw1000
+ *                 fundamental 499.2MHz clock) or 0 to disable the timeout.
+ *
+ * @note dwCommitConfiguration() should be called if this function
+ * enables or disables the timeout. If the timeout is just updated and not
+ * enabled this function will update to the new timeout and nothing more has to
+ * be done.
+ */
+void dwSetReceiveWaitTimeout(dwDevice_t *dev, uint16_t timeout);
+
 void dwSetFrameFilter(dwDevice_t* dev, bool val);
 void dwSetFrameFilterBehaveCoordinator(dwDevice_t* dev, bool val);
 void dwSetFrameFilterAllowBeacon(dwDevice_t* dev, bool val);
@@ -259,6 +272,7 @@ void dwHandleInterrupt(dwDevice_t *dev);
 
 void dwAttachSentHandler(dwDevice_t *dev, dwHandler_t handler);
 void dwAttachReceivedHandler(dwDevice_t *dev, dwHandler_t handler);
+void dwAttachReceiveTimeoutHandler(dwDevice_t *dev, dwHandler_t handler);
 
 void dwSetAntenaDelay(dwDevice_t *dev, dwTime_t delay);
 

@@ -74,6 +74,7 @@
 #define PHR_MODE_SUB 16
 #define LEN_PHR_MODE_SUB 2
 #define RXM110K_BIT 22
+#define RXWTOE_BIT 28
 
 // device control register
 #define SYS_CTRL 0x0D
@@ -158,6 +159,9 @@
 #define LEN_TX_BUFFER 1024
 #define LEN_UWB_FRAMES 127
 #define LEN_EXT_UWB_FRAMES 1023
+
+// Receive frame ait timeout period
+#define RX_FWTO 0x0C
 
 // RX frame info
 #define RX_FINFO 0x10
