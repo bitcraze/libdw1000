@@ -1426,8 +1426,8 @@ char* dwStrError(int error)
 }
 
 static void setBit(uint8_t data[], unsigned int n, unsigned int bit, bool val) {
-	int idx;
-	int shift;
+	unsigned int idx;
+	unsigned int shift;
 
 	idx = bit / 8;
 	if(idx >= n) {
@@ -1443,8 +1443,8 @@ static void setBit(uint8_t data[], unsigned int n, unsigned int bit, bool val) {
 }
 
 static bool getBit(uint8_t data[], unsigned int n, unsigned int bit) {
-	int idx;
-	int shift;
+	unsigned int idx;
+	unsigned int shift;
 
 	idx = bit / 8;
 	if(idx >= n) {
@@ -1457,7 +1457,7 @@ static bool getBit(uint8_t data[], unsigned int n, unsigned int bit) {
 }
 
 static void writeValueToBytes(uint8_t data[], long val, unsigned int n) {
-	int i;
+	unsigned int i;
 	for(i = 0; i < n; i++) {
 		data[i] = ((val >> (i * 8)) & 0xFF);
 	}

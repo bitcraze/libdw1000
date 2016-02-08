@@ -1,4 +1,4 @@
-# Libdw  [![Build Status](https://api.travis-ci.org/bitcraze/libdw1000.svg)](https://travis-ci.org/bitcraze/libdw1000)
+# Libdw1000  [![Build Status](https://api.travis-ci.org/bitcraze/libdw1000.svg)](https://travis-ci.org/bitcraze/libdw1000)
 
 Open source driver implementation for the Decawave DW1000 UWB radio chip
 
@@ -9,9 +9,9 @@ licensed under the same license, Apache2.
 
 ### Initialize
 
-All function of the lib takes a ```dwDevice_t *``` as first argument. This is
-the state of the driver this is done so that this driver could be used to
-control more than one dw1000 radio in the same system.
+All functions of the lib takes a ```dwDevice_t *``` as first argument. The struct
+contains the state of the driver, and the purpose is to enable the driver could be used
+to control more than one dw1000 radio in the same system.
 
 Example of libdw initialization:
 

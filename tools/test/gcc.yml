@@ -12,7 +12,7 @@ compiler:
     - '-Wunused-parameter'
     - '-Wno-address'
     - '-Wno-invalid-token-paste'
-    - '-std=c99'
+    - '-std=c11'
     - '-pedantic'
     - '-O0'
   includes:
