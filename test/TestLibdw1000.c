@@ -2,7 +2,7 @@
 #include "unity.h"
 #include "libdw1000.h"
 
-#include "mock_libdw1000spi.h"
+#include "mock_libdw1000Spi.h"
 #include "mock_dwTestOps.h"
 
 // Set up opertions with mocks
