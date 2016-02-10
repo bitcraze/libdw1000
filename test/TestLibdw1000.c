@@ -149,81 +149,80 @@ void testDwSoftReset() {
 }
 
 
-static void verifyGdwGetFirstPathPower(uint8_t* fpAmpl1Bytes, uint8_t* fpAmpl2Bytes,
-    uint8_t* fpAmpl3Bytes, uint8_t* rxFrameInfo, uint8_t pulseFrequency, float expected);
+static void verifyGdwGetFirstPathPower(uint16_t fpAmpl1, uint16_t fpAmpl2,
+  uint16_t fpAmpl3, uint8_t* rxFrameInfo, uint8_t pulseFrequency, float expected);
 
 void testGdwGetFirstPathPowerAt16MHzLowPower() {
   // Fixture
-  uint8_t fpAmpl1Bytes[LEN_FP_AMPL1] = {0x51, 0x62};
-  uint8_t fpAmpl2Bytes[LEN_FP_AMPL2] = {0x73, 0x84};
-  uint8_t fpAmpl3Bytes[LEN_FP_AMPL3] = {0x95, 0xa6};
+  uint16_t fpAmpl1 = 0x6251;
+  uint16_t fpAmpl2 = 0x8473;
+  uint16_t fpAmpl3 = 0xa695;
   uint8_t rxFrameInfo[LEN_RX_FINFO] = {0x00, 0x00, 0x01, 0xb0};
 
   // Test
   // Assert
-  verifyGdwGetFirstPathPower(fpAmpl1Bytes, fpAmpl2Bytes, fpAmpl3Bytes,
+  verifyGdwGetFirstPathPower(fpAmpl1, fpAmpl2, fpAmpl3,
     rxFrameInfo, TX_PULSE_FREQ_16MHZ, -89.147507);
 }
 
 void testGdwGetFirstPathPowerAt16MHzHighPower() {
   // Fixture
-  uint8_t fpAmpl1Bytes[LEN_FP_AMPL1] = {0x59, 0xe8};
-  uint8_t fpAmpl2Bytes[LEN_FP_AMPL2] = {0x77, 0xb6};
-  uint8_t fpAmpl3Bytes[LEN_FP_AMPL3] = {0x95, 0xd4};
+  uint16_t fpAmpl1 = 0xe859;
+  uint16_t fpAmpl2 = 0xb677;
+  uint16_t fpAmpl3 = 0xd495;
   uint8_t rxFrameInfo[LEN_RX_FINFO] = {0x00, 0x00, 0x03, 0x40};
 
   // Test
   // Assert
-  verifyGdwGetFirstPathPower(fpAmpl1Bytes, fpAmpl2Bytes, fpAmpl3Bytes,
+  verifyGdwGetFirstPathPower(fpAmpl1, fpAmpl2, fpAmpl3,
     rxFrameInfo, TX_PULSE_FREQ_16MHZ, -49.799316);
 }
 
 void testGdwGetFirstPathPowerAt64MHzHighPower() {
   // Fixture
-  uint8_t fpAmpl1Bytes[LEN_FP_AMPL1] = {0x59, 0xe8};
-  uint8_t fpAmpl2Bytes[LEN_FP_AMPL2] = {0x77, 0xb6};
-  uint8_t fpAmpl3Bytes[LEN_FP_AMPL3] = {0x95, 0xd4};
+  uint16_t fpAmpl1 = 0xe859;
+  uint16_t fpAmpl2 = 0xb677;
+  uint16_t fpAmpl3 = 0xd495;
   uint8_t rxFrameInfo[LEN_RX_FINFO] = {0x00, 0x00, 0x03, 0x40};
 
   // Test
   // Assert
-  verifyGdwGetFirstPathPower(fpAmpl1Bytes, fpAmpl2Bytes, fpAmpl3Bytes,
+  verifyGdwGetFirstPathPower(fpAmpl1, fpAmpl2, fpAmpl3,
     rxFrameInfo, TX_PULSE_FREQ_64MHZ, -76.213196);
 }
 
 
-static void verifyGetReceivePower(uint8_t* cirPwrBytes, uint8_t* rxFrameInfo, uint8_t pulseFrequency, float expected);
+static void verifyGetReceivePower(uint16_t cirPwr, uint8_t* rxFrameInfo, uint8_t pulseFrequency, float expected);
 
 void testGetReceivePowerAt16MHzLowPower() {
   // Fixture
-  uint8_t cirPwrBytes[LEN_CIR_PWR] = {0x81, 0x7e};
+  uint16_t cirPwr = 0x7e81;
   uint8_t rxFrameInfo[LEN_RX_FINFO] = {0x00, 0x00, 0x02, 0xb0};
 
   // Test
   // Assert
-  verifyGetReceivePower(cirPwrBytes, rxFrameInfo, TX_PULSE_FREQ_16MHZ, -88.434113);
+  verifyGetReceivePower(cirPwr, rxFrameInfo, TX_PULSE_FREQ_16MHZ, -88.434113);
 }
 
 void testGetReceivePowerAt16MHzHighPower() {
   // Fixture
-  uint8_t cirPwrBytes[LEN_CIR_PWR] = {0x73, 0x91};
+  uint16_t cirPwr = 0x9173;
   uint8_t rxFrameInfo[LEN_RX_FINFO] = {0x00, 0x00, 0x02, 0x40};
 
   // Test
   // Assert
-  verifyGetReceivePower(cirPwrBytes, rxFrameInfo, TX_PULSE_FREQ_16MHZ, -58.137367);
+  verifyGetReceivePower(cirPwr, rxFrameInfo, TX_PULSE_FREQ_16MHZ, -58.137367);
 }
 
 void testGetReceivePowerAt64MHzLowPower() {
   // Fixture
-  uint8_t cirPwrBytes[LEN_CIR_PWR] = {0x73, 0x91};
+  uint16_t cirPwr = 0x9173;
   uint8_t rxFrameInfo[LEN_RX_FINFO] = {0x00, 0x00, 0x02, 0x40};
 
   // Test
   // Assert
-  verifyGetReceivePower(cirPwrBytes, rxFrameInfo, TX_PULSE_FREQ_64MHZ, -81.632904);
+  verifyGetReceivePower(cirPwr, rxFrameInfo, TX_PULSE_FREQ_64MHZ, -81.632904);
 }
-
 
 
 
@@ -298,19 +297,15 @@ static void dwSpiRead_executor(dwDevice_t* dev, uint8_t regid, uint32_t address,
 
 /*****************************/
 
-static void verifyGdwGetFirstPathPower(uint8_t* fpAmpl1Bytes, uint8_t* fpAmpl2Bytes,
-    uint8_t* fpAmpl3Bytes, uint8_t* rxFrameInfo, uint8_t pulseFrequency, float expected) {
+static void verifyGdwGetFirstPathPower(uint16_t fpAmpl1, uint16_t fpAmpl2,
+    uint16_t fpAmpl3, uint8_t* rxFrameInfo, uint8_t pulseFrequency, float expected) {
+
   // Fixture
   dwSpiRead_StubWithCallback(dwSpiRead_executor);
 
-  dwSpiReadExpectation_t readExpectation1 = {&dev, RX_TIME, FP_AMPL1_SUB, fpAmpl1Bytes, LEN_FP_AMPL1, NULL};
-  dwSpiRead_addExpectation(&readExpectation1);
-
-  dwSpiReadExpectation_t readExpectation2 = {&dev, RX_FQUAL, FP_AMPL2_SUB, fpAmpl2Bytes, LEN_FP_AMPL2, NULL};
-  dwSpiRead_addExpectation(&readExpectation2);
-
-  dwSpiReadExpectation_t readExpectation3 = {&dev, RX_FQUAL, FP_AMPL3_SUB, fpAmpl3Bytes, LEN_FP_AMPL3, NULL};
-  dwSpiRead_addExpectation(&readExpectation3);
+  dwSpiRead16_ExpectAndReturn(&dev, RX_TIME, FP_AMPL1_SUB, fpAmpl1);
+  dwSpiRead16_ExpectAndReturn(&dev, RX_FQUAL, FP_AMPL2_SUB, fpAmpl2);
+  dwSpiRead16_ExpectAndReturn(&dev, RX_FQUAL, FP_AMPL3_SUB, fpAmpl3);
 
   dwSpiReadExpectation_t readExpectation4 = {&dev, RX_FINFO, NO_SUB, rxFrameInfo, LEN_RX_FINFO, NULL};
   dwSpiRead_addExpectation(&readExpectation4);
@@ -325,12 +320,11 @@ static void verifyGdwGetFirstPathPower(uint8_t* fpAmpl1Bytes, uint8_t* fpAmpl2By
 }
 
 
-static void verifyGetReceivePower(uint8_t* cirPwrBytes, uint8_t* rxFrameInfo, uint8_t pulseFrequency, float expected) {
+static void verifyGetReceivePower(uint16_t cirPwr, uint8_t* rxFrameInfo, uint8_t pulseFrequency, float expected) {
   // Fixture
   dwSpiRead_StubWithCallback(dwSpiRead_executor);
 
-  dwSpiReadExpectation_t readExpectation1 = {&dev, RX_FQUAL, CIR_PWR_SUB, cirPwrBytes, LEN_CIR_PWR, NULL};
-  dwSpiRead_addExpectation(&readExpectation1);
+  dwSpiRead16_ExpectAndReturn(&dev, RX_FQUAL, CIR_PWR_SUB, cirPwr);
 
   dwSpiReadExpectation_t readExpectation2 = {&dev, RX_FINFO, NO_SUB, rxFrameInfo, LEN_RX_FINFO, NULL};
   dwSpiRead_addExpectation(&readExpectation2);

@@ -799,12 +799,6 @@ float dwGetReceiveQuality(dwDevice_t* dev) {
 	return (float)f2 / noise;
 }
 
-static float spiRead2BytesAsFloat(dwDevice_t *dev, uint8_t regid, uint32_t address) {
-  uint8_t data[2];
-  dwSpiRead(dev, regid, address, data, 2);
-  return (float)((unsigned int)data[0] | ((unsigned int)data[1] << 8));
-}
-
 static float spiReadRxInfo(dwDevice_t *dev) {
 	uint8_t rxFrameInfo[LEN_RX_FINFO];
 	dwSpiRead(dev, RX_FINFO, NO_SUB, rxFrameInfo, LEN_RX_FINFO);
@@ -835,16 +829,16 @@ static float calculatePower(float base, float N, uint8_t pulseFrequency) {
 }
 
 float dwGetFirstPathPower(dwDevice_t* dev) {
-  float f1 = spiRead2BytesAsFloat(dev, RX_TIME, FP_AMPL1_SUB);
-  float f2 = spiRead2BytesAsFloat(dev, RX_FQUAL, FP_AMPL2_SUB);
-  float f3 = spiRead2BytesAsFloat(dev, RX_FQUAL, FP_AMPL3_SUB);
+  float f1 = (float)dwSpiRead16(dev, RX_TIME, FP_AMPL1_SUB);
+  float f2 = (float)dwSpiRead16(dev, RX_FQUAL, FP_AMPL2_SUB);
+  float f3 = (float)dwSpiRead16(dev, RX_FQUAL, FP_AMPL3_SUB);
   float N = spiReadRxInfo(dev);
 
   return calculatePower(f1 * f1 + f2 * f2 + f3 * f3, N, dev->pulseFrequency);
 }
 
 float dwGetReceivePower(dwDevice_t* dev) {
-  float C = spiRead2BytesAsFloat(dev, RX_FQUAL, CIR_PWR_SUB);
+  float C = (float)dwSpiRead16(dev, RX_FQUAL, CIR_PWR_SUB);
   float N = spiReadRxInfo(dev);
 
   float twoPower17 = 131072.0;

@@ -46,6 +46,12 @@ void dwSpiRead(dwDevice_t *dev, uint8_t regid, uint32_t address,
   dev->ops->spiRead(dev, header, headerLength, data, length);
 }
 
+uint16_t dwSpiRead16(dwDevice_t *dev, uint8_t regid, uint32_t address) {
+  uint16_t data;
+  dwSpiRead(dev, regid, address, &data, sizeof(data));
+  return data;
+}
+
 uint32_t dwSpiRead32(dwDevice_t *dev, uint8_t regid, uint32_t address) {
   uint32_t data;
   dwSpiRead(dev, regid, address, &data, sizeof(data));

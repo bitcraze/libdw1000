@@ -32,7 +32,7 @@
  * Read from the dw1000 SPI interface
  */
 void dwSpiRead(dwDevice_t *dev, uint8_t regid, uint32_t address, void* data, size_t length);
-
+uint16_t dwSpiRead16(dwDevice_t *dev, uint8_t regid, uint32_t address);
 uint32_t dwSpiRead32(dwDevice_t *dev, uint8_t regid, uint32_t address);
 
 /**

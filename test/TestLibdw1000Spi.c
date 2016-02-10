@@ -10,12 +10,19 @@ static size_t readListenerHeaderLength = 0;
 static void* readListenerData = NULL;
 static size_t readListenerDataLength = 0;
 
+static uint8_t* nextReadData = NULL;
+
 static void spiReadListener(dwDevice_t* dev, const void *header,
-    size_t headerLength, void* data, size_t dataLength) {
+  size_t headerLength, void* data, size_t dataLength) {
 
   readListenerDev = dev;
   memcpy(readListenerHeader, header, headerLength);
   readListenerHeaderLength = headerLength;
+
+  if (NULL != nextReadData) {
+    memcpy(data, nextReadData, dataLength);
+  }
+
   readListenerData = data;
   readListenerDataLength = dataLength;
 }
@@ -45,6 +52,10 @@ static dwDevice_t dev = {
   .ops = &ops,
 };
 
+
+void setup() {
+  nextReadData = NULL;
+}
 
 void testThatDwSpiReadCallsSpiRead() {
   // Fixture
@@ -122,6 +133,34 @@ void testThatDwSpiReadHeaderIsCorrectForAddress0xffff() {
   // Assert
   uint8_t expectedHeader[] = {0x7f, 0xff, 0xff};
   verifyThatDwSpiReadHeaderIsCorrect(0xffff, expectedHeader, sizeof(expectedHeader));
+}
+
+
+void testThatDwSpiRead16() {
+  // Fixture
+  uint8_t data[] = {0x01, 0x02};
+  nextReadData = &data;
+
+  // Test
+  uint32_t actual = dwSpiRead16(&dev, 0, 0);
+
+  // Assert
+  TEST_ASSERT_EQUAL(2, readListenerDataLength);
+  TEST_ASSERT_EQUAL_HEX16(0x0201, actual);
+}
+
+
+void testThatDwSpiRead32() {
+  // Fixture
+  uint8_t data[] = {0x01, 0x02, 0x03, 0x04};
+  nextReadData = &data;
+
+  // Test
+  uint32_t actual = dwSpiRead32(&dev, 0, 0);
+
+  // Assert
+  TEST_ASSERT_EQUAL(4, readListenerDataLength);
+  TEST_ASSERT_EQUAL_HEX32(0x04030201, actual);
 }
 
 
