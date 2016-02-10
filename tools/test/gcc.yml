@@ -11,7 +11,6 @@ compiler:
     - '-Wextra'
     - '-Wunused-parameter'
     - '-Wno-address'
-    - '-Wno-invalid-token-paste'
     - '-std=c11'
     - '-pedantic'
     - '-O0'
@@ -59,6 +58,9 @@ unsupported:
 colour: true
 
 :cmock:
-  :plugins: []
+  :plugins:
+    - :ignore_arg
+    - :array
+    - :callback
   :mock_path: *mocks_path
   :mock_prefix: mock_

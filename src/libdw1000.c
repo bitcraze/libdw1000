@@ -174,11 +174,7 @@ void dwManageLDE(dwDevice_t* dev) {
 
 uint32_t dwGetDeviceId(dwDevice_t* dev)
 {
-  uint32_t devid;
-
-  dwSpiRead(dev, DEV_ID, 0, &devid, sizeof(devid));
-
-  return devid;
+  return dwSpiRead32(dev, DEV_ID, 0);
 }
 
 void dwEnableAllLeds(dwDevice_t* dev)
@@ -515,7 +511,7 @@ void dwSetDataRate(dwDevice_t* dev, uint8_t rate) {
 	} else {
 		sfdLength = 0x40;
 	}
-	dwSpiRead(dev, USR_SFD, SFD_LENGTH_SUB, &sfdLength, LEN_SFD_LENGTH);
+	dwSpiWrite(dev, USR_SFD, SFD_LENGTH_SUB, &sfdLength, LEN_SFD_LENGTH);
 	dev->dataRate = rate;
 }
 
@@ -1293,65 +1289,6 @@ void dwAttachReceivedHandler(dwDevice_t *dev, dwHandler_t handler)
 
 void dwAttachReceiveTimeoutHandler(dwDevice_t *dev, dwHandler_t handler) {
   dev->handleReceiveTimeout = handler;
-}
-
-float getFirstPathPower(dwDevice_t *dev) {
-	uint8_t fpAmpl1Bytes[LEN_FP_AMPL1];
-	uint8_t fpAmpl2Bytes[LEN_FP_AMPL2];
-	uint8_t fpAmpl3Bytes[LEN_FP_AMPL3];
-	uint8_t rxFrameInfo[LEN_RX_FINFO];
-	unsigned int f1, f2, f3, N;
-	float A, corrFac;
-	dwSpiRead(dev, RX_TIME, FP_AMPL1_SUB, fpAmpl1Bytes, LEN_FP_AMPL1);
-	dwSpiRead(dev, RX_FQUAL, FP_AMPL2_SUB, fpAmpl2Bytes, LEN_FP_AMPL2);
-	dwSpiRead(dev, RX_FQUAL, FP_AMPL3_SUB, fpAmpl3Bytes, LEN_FP_AMPL3);
-	dwSpiRead(dev, RX_FINFO, NO_SUB, rxFrameInfo, LEN_RX_FINFO);
-	f1 = (unsigned int)fpAmpl1Bytes[0] | ((unsigned int)fpAmpl1Bytes[1] << 8);
-	f2 = (unsigned int)fpAmpl2Bytes[0] | ((unsigned int)fpAmpl2Bytes[1] << 8);
-	f3 = (unsigned int)fpAmpl3Bytes[0] | ((unsigned int)fpAmpl3Bytes[1] << 8);
-	N = (((unsigned int)rxFrameInfo[2] >> 4) & 0xFF) | ((unsigned int)rxFrameInfo[3] << 4);
-	if(dev->pulseFrequency == TX_PULSE_FREQ_16MHZ) {
-		A = 115.72;
-		corrFac = 2.3334;
-	} else {
-		A = 121.74;
-		corrFac = 1.1667;
-	}
-	float estFpPwr = 10.0 * log10(((float)f1 * (float)f1 + (float)f2 * (float)f2 + (float)f3 * (float)f3) / ((float)N * (float)N)) - A;
-	if(estFpPwr <= -88) {
-		return estFpPwr;
-	} else {
-		// approximation of Fig. 22 in user manual for dbm correction
-		estFpPwr += (estFpPwr + 88) * corrFac;
-	}
-	return estFpPwr;
-}
-
-float getReceivePower(dwDevice_t *dev) {
-	uint8_t cirPwrBytes[LEN_CIR_PWR];
-	uint8_t rxFrameInfo[LEN_RX_FINFO];
-	unsigned long twoPower17 = 131072;
-	unsigned int C, N;
-	float A, corrFac;
-	dwSpiRead(dev, RX_FQUAL, CIR_PWR_SUB, cirPwrBytes, LEN_CIR_PWR);
-	dwSpiRead(dev, RX_FINFO, NO_SUB, rxFrameInfo, LEN_RX_FINFO);
-	C = (unsigned int)cirPwrBytes[0] | ((unsigned int)cirPwrBytes[1] << 8);
-	N = (((unsigned int)rxFrameInfo[2] >> 4) & 0xFF) | ((unsigned int)rxFrameInfo[3] << 4);
-	if(dev->pulseFrequency == TX_PULSE_FREQ_16MHZ) {
-		A = 115.72;
-		corrFac = 2.3334;
-	} else {
-		A = 121.74;
-		corrFac = 1.1667;
-	}
-	float estRxPwr = 10.0 * log10(((float)C * (float)twoPower17) / ((float)N * (float)N)) - A;
-	if(estRxPwr <= -88) {
-		return estRxPwr;
-	} else {
-		// approximation of Fig. 22 in user manual for dbm correction
-		estRxPwr += (estRxPwr + 88) * corrFac;
-	}
-	return estRxPwr;
 }
 
 void dwSetAntenaDelay(dwDevice_t *dev, dwTime_t delay) {
