@@ -1,6 +1,6 @@
 #include "unity.h"
 
-#include "mock_libdw1000spi.h"
+#include "mock_libdw1000Spi.h"
 
 // Include c file to test static functions
 #include "libdw1000.c"

@@ -19,7 +19,7 @@
  */
 
 
-#include <libdw1000spi.h>
+#include "libdw1000Spi.h"
 
 
 void dwSpiRead(dwDevice_t *dev, uint8_t regid, uint32_t address,

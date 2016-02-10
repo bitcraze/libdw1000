@@ -1,7 +1,7 @@
 #include <string.h>
 #include "unity.h"
 
-#include "libdw1000spi.h"
+#include "libdw1000Spi.h"
 
 
 static dwDevice_t* readListenerDev = NULL;

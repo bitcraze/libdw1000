@@ -21,7 +21,7 @@
 #include <string.h>
 #include <math.h>
 
-#include <libdw1000.h>
+#include "libdw1000.h"
 
 
 static const uint8_t BIAS_500_16_ZERO = 10;

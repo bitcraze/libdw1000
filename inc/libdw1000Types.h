@@ -25,7 +25,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include <dw1000.h>
+#include "dw1000.h"
 
 struct dwOps_s;
 struct dwDevice_s;
