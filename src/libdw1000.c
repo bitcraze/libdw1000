@@ -553,11 +553,6 @@ void dwUseExtendedFrameLength(dwDevice_t* dev, bool val) {
 
 void dwReceivePermanently(dwDevice_t* dev, bool val) {
 	dev->permanentReceive = val;
-	if(val) {
-		// in case permanent, also reenable receiver once failed
-		dwSetReceiverAutoReenable(dev, true);
-		dwWriteSystemConfigurationRegister(dev);
-	}
 }
 
 void dwSetChannel(dwDevice_t* dev, uint8_t channel) {
@@ -596,7 +591,7 @@ void dwSetDefaults(dwDevice_t* dev) {
 		dwInterruptOnSent(dev, true);
 		dwInterruptOnReceived(dev, true);
     dwInterruptOnReceiveTimeout(dev, true);
-		dwInterruptOnReceiveFailed(dev, false);
+		dwInterruptOnReceiveFailed(dev, true);
 		dwInterruptOnReceiveTimestampAvailable(dev, false);
 		dwInterruptOnAutomaticAcknowledgeTrigger(dev, false);
 		dwSetReceiverAutoReenable(dev, true);
@@ -800,51 +795,63 @@ float dwGetReceiveQuality(dwDevice_t* dev) {
 	return (float)f2 / noise;
 }
 
-static float spiReadRxInfo(dwDevice_t *dev) {
+float dwGetFirstPathPower(dwDevice_t* dev) {
+	uint8_t fpAmpl1Bytes[LEN_FP_AMPL1];
+	uint8_t fpAmpl2Bytes[LEN_FP_AMPL2];
+	uint8_t fpAmpl3Bytes[LEN_FP_AMPL3];
 	uint8_t rxFrameInfo[LEN_RX_FINFO];
+	unsigned int f1, f2, f3, N;
+	float A, corrFac;
+	dwSpiRead(dev, RX_TIME, FP_AMPL1_SUB, fpAmpl1Bytes, LEN_FP_AMPL1);
+	dwSpiRead(dev, RX_FQUAL, FP_AMPL2_SUB, fpAmpl2Bytes, LEN_FP_AMPL2);
+	dwSpiRead(dev, RX_FQUAL, FP_AMPL3_SUB, fpAmpl3Bytes, LEN_FP_AMPL3);
 	dwSpiRead(dev, RX_FINFO, NO_SUB, rxFrameInfo, LEN_RX_FINFO);
-	return (float)((((unsigned int)rxFrameInfo[2] >> 4) & 0xFF) | ((unsigned int)rxFrameInfo[3] << 4));
-}
-
-static float calculatePower(float base, float N, uint8_t pulseFrequency) {
-  float A, corrFac;
-
-	if(TX_PULSE_FREQ_16MHZ == pulseFrequency) {
+	f1 = (unsigned int)fpAmpl1Bytes[0] | ((unsigned int)fpAmpl1Bytes[1] << 8);
+	f2 = (unsigned int)fpAmpl2Bytes[0] | ((unsigned int)fpAmpl2Bytes[1] << 8);
+	f3 = (unsigned int)fpAmpl3Bytes[0] | ((unsigned int)fpAmpl3Bytes[1] << 8);
+	N = (((unsigned int)rxFrameInfo[2] >> 4) & 0xFF) | ((unsigned int)rxFrameInfo[3] << 4);
+	if(dev->pulseFrequency == TX_PULSE_FREQ_16MHZ) {
 		A = 115.72;
 		corrFac = 2.3334;
 	} else {
 		A = 121.74;
 		corrFac = 1.1667;
 	}
-
-	float estFpPwr = 10.0 * log10(base / (N * N)) - A;
-
+	float estFpPwr = 10.0 * log10(((float)f1 * (float)f1 + (float)f2 * (float)f2 + (float)f3 * (float)f3) / ((float)N * (float)N)) - A;
 	if(estFpPwr <= -88) {
 		return estFpPwr;
 	} else {
 		// approximation of Fig. 22 in user manual for dbm correction
 		estFpPwr += (estFpPwr + 88) * corrFac;
 	}
-
 	return estFpPwr;
 }
 
-float dwGetFirstPathPower(dwDevice_t* dev) {
-  float f1 = (float)dwSpiRead16(dev, RX_TIME, FP_AMPL1_SUB);
-  float f2 = (float)dwSpiRead16(dev, RX_FQUAL, FP_AMPL2_SUB);
-  float f3 = (float)dwSpiRead16(dev, RX_FQUAL, FP_AMPL3_SUB);
-  float N = spiReadRxInfo(dev);
-
-  return calculatePower(f1 * f1 + f2 * f2 + f3 * f3, N, dev->pulseFrequency);
-}
-
 float dwGetReceivePower(dwDevice_t* dev) {
-  float C = (float)dwSpiRead16(dev, RX_FQUAL, CIR_PWR_SUB);
-  float N = spiReadRxInfo(dev);
-
-  float twoPower17 = 131072.0;
-
-  return calculatePower(C * twoPower17, N, dev->pulseFrequency);
+	uint8_t cirPwrBytes[LEN_CIR_PWR];
+	uint8_t rxFrameInfo[LEN_RX_FINFO];
+	unsigned long twoPower17 = 131072;
+	unsigned int C, N;
+	float A, corrFac;
+	dwSpiRead(dev, RX_FQUAL, CIR_PWR_SUB, cirPwrBytes, LEN_CIR_PWR);
+	dwSpiRead(dev, RX_FINFO, NO_SUB, rxFrameInfo, LEN_RX_FINFO);
+	C = (unsigned int)cirPwrBytes[0] | ((unsigned int)cirPwrBytes[1] << 8);
+	N = (((unsigned int)rxFrameInfo[2] >> 4) & 0xFF) | ((unsigned int)rxFrameInfo[3] << 4);
+	if(dev->pulseFrequency == TX_PULSE_FREQ_16MHZ) {
+		A = 115.72;
+		corrFac = 2.3334;
+	} else {
+		A = 121.74;
+		corrFac = 1.1667;
+	}
+	float estRxPwr = 10.0 * log10(((float)C * (float)twoPower17) / ((float)N * (float)N)) - A;
+	if(estRxPwr <= -88) {
+		return estRxPwr;
+	} else {
+		// approximation of Fig. 22 in user manual for dbm correction
+		estRxPwr += (estRxPwr + 88) * corrFac;
+	}
+	return estRxPwr;
 }
 
 void dwEnableMode(dwDevice_t *dev, const uint8_t mode[]) {
