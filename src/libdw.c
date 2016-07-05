@@ -774,14 +774,15 @@ void dwClearReceiveTimestampAvailableStatus(dwDevice_t* dev) {
 
 void dwClearReceiveStatus(dwDevice_t* dev) {
 	// clear latched RX bits (i.e. write 1 to clear)
-	setBit(dev->sysstatus, LEN_SYS_STATUS, RXDFR_BIT, true);
-	setBit(dev->sysstatus, LEN_SYS_STATUS, LDEDONE_BIT, true);
-	setBit(dev->sysstatus, LEN_SYS_STATUS, LDEERR_BIT, true);
-	setBit(dev->sysstatus, LEN_SYS_STATUS, RXPHE_BIT, true);
-	setBit(dev->sysstatus, LEN_SYS_STATUS, RXFCE_BIT, true);
-	setBit(dev->sysstatus, LEN_SYS_STATUS, RXFCG_BIT, true);
-	setBit(dev->sysstatus, LEN_SYS_STATUS, RXRFSL_BIT, true);
-	dwSpiWrite(dev, SYS_STATUS, NO_SUB, dev->sysstatus, LEN_SYS_STATUS);
+  uint8_t reg[LEN_SYS_STATUS] = {0};
+	setBit(reg, LEN_SYS_STATUS, RXDFR_BIT, true);
+	setBit(reg, LEN_SYS_STATUS, LDEDONE_BIT, true);
+	setBit(reg, LEN_SYS_STATUS, LDEERR_BIT, true);
+	setBit(reg, LEN_SYS_STATUS, RXPHE_BIT, true);
+	setBit(reg, LEN_SYS_STATUS, RXFCE_BIT, true);
+	setBit(reg, LEN_SYS_STATUS, RXFCG_BIT, true);
+	setBit(reg, LEN_SYS_STATUS, RXRFSL_BIT, true);
+	dwSpiWrite(dev, SYS_STATUS, NO_SUB, reg, LEN_SYS_STATUS);
 }
 
 void dwClearTransmitStatus(dwDevice_t* dev) {
