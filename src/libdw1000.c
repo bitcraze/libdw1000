@@ -553,11 +553,6 @@ void dwUseExtendedFrameLength(dwDevice_t* dev, bool val) {
 
 void dwReceivePermanently(dwDevice_t* dev, bool val) {
 	dev->permanentReceive = val;
-	if(val) {
-		// in case permanent, also reenable receiver once failed
-		dwSetReceiverAutoReenable(dev, true);
-		dwWriteSystemConfigurationRegister(dev);
-	}
 }
 
 void dwSetChannel(dwDevice_t* dev, uint8_t channel) {
