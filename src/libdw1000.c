@@ -21,8 +21,7 @@
 #include <string.h>
 #include <math.h>
 
-#include <libdw1000.h>
-#include <dw1000.h>
+#include "libdw1000.h"
 
 
 static const uint8_t BIAS_500_16_ZERO = 10;
@@ -175,11 +174,7 @@ void dwManageLDE(dwDevice_t* dev) {
 
 uint32_t dwGetDeviceId(dwDevice_t* dev)
 {
-  uint32_t devid;
-
-  dwSpiRead(dev, DEV_ID, 0, &devid, sizeof(devid));
-
-  return devid;
+  return dwSpiRead32(dev, DEV_ID, 0);
 }
 
 void dwEnableAllLeds(dwDevice_t* dev)
@@ -516,7 +511,7 @@ void dwSetDataRate(dwDevice_t* dev, uint8_t rate) {
 	} else {
 		sfdLength = 0x40;
 	}
-	dwSpiRead(dev, USR_SFD, SFD_LENGTH_SUB, &sfdLength, LEN_SFD_LENGTH);
+	dwSpiWrite(dev, USR_SFD, SFD_LENGTH_SUB, &sfdLength, LEN_SFD_LENGTH);
 	dev->dataRate = rate;
 }
 
@@ -805,63 +800,51 @@ float dwGetReceiveQuality(dwDevice_t* dev) {
 	return (float)f2 / noise;
 }
 
-float dwGetFirstPathPower(dwDevice_t* dev) {
-	uint8_t fpAmpl1Bytes[LEN_FP_AMPL1];
-	uint8_t fpAmpl2Bytes[LEN_FP_AMPL2];
-	uint8_t fpAmpl3Bytes[LEN_FP_AMPL3];
+static float spiReadRxInfo(dwDevice_t *dev) {
 	uint8_t rxFrameInfo[LEN_RX_FINFO];
-	unsigned int f1, f2, f3, N;
-	float A, corrFac;
-	dwSpiRead(dev, RX_TIME, FP_AMPL1_SUB, fpAmpl1Bytes, LEN_FP_AMPL1);
-	dwSpiRead(dev, RX_FQUAL, FP_AMPL2_SUB, fpAmpl2Bytes, LEN_FP_AMPL2);
-	dwSpiRead(dev, RX_FQUAL, FP_AMPL3_SUB, fpAmpl3Bytes, LEN_FP_AMPL3);
 	dwSpiRead(dev, RX_FINFO, NO_SUB, rxFrameInfo, LEN_RX_FINFO);
-	f1 = (unsigned int)fpAmpl1Bytes[0] | ((unsigned int)fpAmpl1Bytes[1] << 8);
-	f2 = (unsigned int)fpAmpl2Bytes[0] | ((unsigned int)fpAmpl2Bytes[1] << 8);
-	f3 = (unsigned int)fpAmpl3Bytes[0] | ((unsigned int)fpAmpl3Bytes[1] << 8);
-	N = (((unsigned int)rxFrameInfo[2] >> 4) & 0xFF) | ((unsigned int)rxFrameInfo[3] << 4);
-	if(dev->pulseFrequency == TX_PULSE_FREQ_16MHZ) {
+	return (float)((((unsigned int)rxFrameInfo[2] >> 4) & 0xFF) | ((unsigned int)rxFrameInfo[3] << 4));
+}
+
+static float calculatePower(float base, float N, uint8_t pulseFrequency) {
+  float A, corrFac;
+
+	if(TX_PULSE_FREQ_16MHZ == pulseFrequency) {
 		A = 115.72;
 		corrFac = 2.3334;
 	} else {
 		A = 121.74;
 		corrFac = 1.1667;
 	}
-	float estFpPwr = 10.0 * log10(((float)f1 * (float)f1 + (float)f2 * (float)f2 + (float)f3 * (float)f3) / ((float)N * (float)N)) - A;
+
+	float estFpPwr = 10.0 * log10(base / (N * N)) - A;
+
 	if(estFpPwr <= -88) {
 		return estFpPwr;
 	} else {
 		// approximation of Fig. 22 in user manual for dbm correction
 		estFpPwr += (estFpPwr + 88) * corrFac;
 	}
+
 	return estFpPwr;
 }
 
+float dwGetFirstPathPower(dwDevice_t* dev) {
+  float f1 = (float)dwSpiRead16(dev, RX_TIME, FP_AMPL1_SUB);
+  float f2 = (float)dwSpiRead16(dev, RX_FQUAL, FP_AMPL2_SUB);
+  float f3 = (float)dwSpiRead16(dev, RX_FQUAL, FP_AMPL3_SUB);
+  float N = spiReadRxInfo(dev);
+
+  return calculatePower(f1 * f1 + f2 * f2 + f3 * f3, N, dev->pulseFrequency);
+}
+
 float dwGetReceivePower(dwDevice_t* dev) {
-	uint8_t cirPwrBytes[LEN_CIR_PWR];
-	uint8_t rxFrameInfo[LEN_RX_FINFO];
-	unsigned long twoPower17 = 131072;
-	unsigned int C, N;
-	float A, corrFac;
-	dwSpiRead(dev, RX_FQUAL, CIR_PWR_SUB, cirPwrBytes, LEN_CIR_PWR);
-	dwSpiRead(dev, RX_FINFO, NO_SUB, rxFrameInfo, LEN_RX_FINFO);
-	C = (unsigned int)cirPwrBytes[0] | ((unsigned int)cirPwrBytes[1] << 8);
-	N = (((unsigned int)rxFrameInfo[2] >> 4) & 0xFF) | ((unsigned int)rxFrameInfo[3] << 4);
-	if(dev->pulseFrequency == TX_PULSE_FREQ_16MHZ) {
-		A = 115.72;
-		corrFac = 2.3334;
-	} else {
-		A = 121.74;
-		corrFac = 1.1667;
-	}
-	float estRxPwr = 10.0 * log10(((float)C * (float)twoPower17) / ((float)N * (float)N)) - A;
-	if(estRxPwr <= -88) {
-		return estRxPwr;
-	} else {
-		// approximation of Fig. 22 in user manual for dbm correction
-		estRxPwr += (estRxPwr + 88) * corrFac;
-	}
-	return estRxPwr;
+  float C = (float)dwSpiRead16(dev, RX_FQUAL, CIR_PWR_SUB);
+  float N = spiReadRxInfo(dev);
+
+  float twoPower17 = 131072.0;
+
+  return calculatePower(C * twoPower17, N, dev->pulseFrequency);
 }
 
 void dwEnableMode(dwDevice_t *dev, const uint8_t mode[]) {
@@ -1297,131 +1280,8 @@ void dwAttachReceiveTimeoutHandler(dwDevice_t *dev, dwHandler_t handler) {
   dev->handleReceiveTimeout = handler;
 }
 
-float getFirstPathPower(dwDevice_t *dev) {
-	uint8_t fpAmpl1Bytes[LEN_FP_AMPL1];
-	uint8_t fpAmpl2Bytes[LEN_FP_AMPL2];
-	uint8_t fpAmpl3Bytes[LEN_FP_AMPL3];
-	uint8_t rxFrameInfo[LEN_RX_FINFO];
-	unsigned int f1, f2, f3, N;
-	float A, corrFac;
-	dwSpiRead(dev, RX_TIME, FP_AMPL1_SUB, fpAmpl1Bytes, LEN_FP_AMPL1);
-	dwSpiRead(dev, RX_FQUAL, FP_AMPL2_SUB, fpAmpl2Bytes, LEN_FP_AMPL2);
-	dwSpiRead(dev, RX_FQUAL, FP_AMPL3_SUB, fpAmpl3Bytes, LEN_FP_AMPL3);
-	dwSpiRead(dev, RX_FINFO, NO_SUB, rxFrameInfo, LEN_RX_FINFO);
-	f1 = (unsigned int)fpAmpl1Bytes[0] | ((unsigned int)fpAmpl1Bytes[1] << 8);
-	f2 = (unsigned int)fpAmpl2Bytes[0] | ((unsigned int)fpAmpl2Bytes[1] << 8);
-	f3 = (unsigned int)fpAmpl3Bytes[0] | ((unsigned int)fpAmpl3Bytes[1] << 8);
-	N = (((unsigned int)rxFrameInfo[2] >> 4) & 0xFF) | ((unsigned int)rxFrameInfo[3] << 4);
-	if(dev->pulseFrequency == TX_PULSE_FREQ_16MHZ) {
-		A = 115.72;
-		corrFac = 2.3334;
-	} else {
-		A = 121.74;
-		corrFac = 1.1667;
-	}
-	float estFpPwr = 10.0 * log10(((float)f1 * (float)f1 + (float)f2 * (float)f2 + (float)f3 * (float)f3) / ((float)N * (float)N)) - A;
-	if(estFpPwr <= -88) {
-		return estFpPwr;
-	} else {
-		// approximation of Fig. 22 in user manual for dbm correction
-		estFpPwr += (estFpPwr + 88) * corrFac;
-	}
-	return estFpPwr;
-}
-
-float getReceivePower(dwDevice_t *dev) {
-	uint8_t cirPwrBytes[LEN_CIR_PWR];
-	uint8_t rxFrameInfo[LEN_RX_FINFO];
-	unsigned long twoPower17 = 131072;
-	unsigned int C, N;
-	float A, corrFac;
-	dwSpiRead(dev, RX_FQUAL, CIR_PWR_SUB, cirPwrBytes, LEN_CIR_PWR);
-	dwSpiRead(dev, RX_FINFO, NO_SUB, rxFrameInfo, LEN_RX_FINFO);
-	C = (unsigned int)cirPwrBytes[0] | ((unsigned int)cirPwrBytes[1] << 8);
-	N = (((unsigned int)rxFrameInfo[2] >> 4) & 0xFF) | ((unsigned int)rxFrameInfo[3] << 4);
-	if(dev->pulseFrequency == TX_PULSE_FREQ_16MHZ) {
-		A = 115.72;
-		corrFac = 2.3334;
-	} else {
-		A = 121.74;
-		corrFac = 1.1667;
-	}
-	float estRxPwr = 10.0 * log10(((float)C * (float)twoPower17) / ((float)N * (float)N)) - A;
-	if(estRxPwr <= -88) {
-		return estRxPwr;
-	} else {
-		// approximation of Fig. 22 in user manual for dbm correction
-		estRxPwr += (estRxPwr + 88) * corrFac;
-	}
-	return estRxPwr;
-}
-
 void dwSetAntenaDelay(dwDevice_t *dev, dwTime_t delay) {
   dev->antennaDelay.full = delay.full;
-}
-
-void dwSpiRead(dwDevice_t *dev, uint8_t regid, uint32_t address,
-                                void* data, size_t length)
-{
-  uint8_t header[3];
-  size_t headerLength=1;
-
-  header[0] = regid & 0x3f;
-
-  if (address != 0) {
-    header[0] |= 0x40;
-
-    header[1] = address & 0x7f;
-    address >>= 7;
-    headerLength = 2;
-
-    if (address != 0) {
-      header[1] |= 0x80;
-      header[2] = address & 0xff;
-      headerLength = 3;
-    }
-  }
-
-  dev->ops->spiRead(dev, header, headerLength, data, length);
-}
-
-uint32_t dwSpiRead32(dwDevice_t *dev, uint8_t regid, uint32_t address)
-{
-  uint32_t data;
-  dwSpiRead(dev, regid, address, &data, sizeof(data));
-  return data;
-}
-
-void dwSpiWrite(dwDevice_t *dev, uint8_t regid, uint32_t address,
-                                 const void* data, size_t length)
-{
-  uint8_t header[3];
-  size_t headerLength=1;
-
-  header[0] = regid & 0x3f;
-  header[0] |= 0x80;
-
-  if (address != 0) {
-    header[0] |= 0x40;
-
-    header[1] = address & 0x7f;
-    address >>= 7;
-    headerLength = 2;
-
-    if (address != 0) {
-      header[1] |= 0x80;
-      header[2] = address & 0xff;
-      headerLength = 3;
-    }
-  }
-
-  dev->ops->spiWrite(dev, header, headerLength, data, length);
-}
-
-void dwSpiWrite32(dwDevice_t *dev, uint8_t regid, uint32_t address,
-                                   uint32_t data)
-{
-  dwSpiWrite(dev, regid, address, &data, sizeof(data));
 }
 
 char* dwStrError(int error)

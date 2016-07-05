@@ -1,7 +1,9 @@
 #include "unity.h"
 
+#include "mock_libdw1000Spi.h"
+
 // Include c file to test static functions
-#include "libdw.c"
+#include "libdw1000.c"
 
 void testThatGetBitReturnsFirstBitWhenSet() {
   // Fixture
