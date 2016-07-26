@@ -176,6 +176,7 @@ void dwHandleInterrupt(dwDevice_t *dev);
 void dwAttachSentHandler(dwDevice_t *dev, dwHandler_t handler);
 void dwAttachReceivedHandler(dwDevice_t *dev, dwHandler_t handler);
 void dwAttachReceiveTimeoutHandler(dwDevice_t *dev, dwHandler_t handler);
+void dwAttachReceiveFailedHandler(dwDevice_t *dev, dwHandler_t handler);
 
 void dwSetAntenaDelay(dwDevice_t *dev, dwTime_t delay);
 

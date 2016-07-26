@@ -78,6 +78,7 @@ void dwInit(dwDevice_t* dev, dwOps_t* ops)
   // Dummy callback handlers
   dev->handleSent = dummy;
   dev->handleReceived = dummy;
+  dev->handleReceiveFailed = dummy;
 
 }
 
@@ -1218,7 +1219,6 @@ void dwTune(dwDevice_t *dev) {
 
 // FIXME: This is a test!
 void (*_handleError)(void) = dummy;
-void (*_handleReceiveFailed)(void) = dummy;
 void (*_handleReceiveTimestampAvailable)(void) = dummy;
 
 void dwHandleInterrupt(dwDevice_t *dev) {
@@ -1235,8 +1235,8 @@ void dwHandleInterrupt(dwDevice_t *dev) {
 		(*_handleReceiveTimestampAvailable)();
 		dwClearReceiveTimestampAvailableStatus(dev);
 	}
-	if(dwIsReceiveFailed(dev) && _handleReceiveFailed != 0) {
-		(*_handleReceiveFailed)();
+	if(dwIsReceiveFailed(dev) && dev->handleReceiveFailed != 0) {
+		dev->handleReceiveFailed(dev);
 		dwClearReceiveStatus(dev);
 		if(dev->permanentReceive) {
 			dwNewReceive(dev);
@@ -1273,6 +1273,10 @@ void dwAttachReceivedHandler(dwDevice_t *dev, dwHandler_t handler)
 
 void dwAttachReceiveTimeoutHandler(dwDevice_t *dev, dwHandler_t handler) {
   dev->handleReceiveTimeout = handler;
+}
+
+void dwAttachReceiveFailedHandler(dwDevice_t *dev, dwHandler_t handler) {
+  dev->handleReceiveFailed = handler;
 }
 
 void dwSetAntenaDelay(dwDevice_t *dev, dwTime_t delay) {
