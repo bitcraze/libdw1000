@@ -773,6 +773,7 @@ void dwClearReceiveStatus(dwDevice_t* dev) {
 	setBit(reg, LEN_SYS_STATUS, RXFCE_BIT, true);
 	setBit(reg, LEN_SYS_STATUS, RXFCG_BIT, true);
 	setBit(reg, LEN_SYS_STATUS, RXRFSL_BIT, true);
+  setBit(reg, LEN_SYS_STATUS, RXRFTO_BIT, true);
 	dwSpiWrite(dev, SYS_STATUS, NO_SUB, reg, LEN_SYS_STATUS);
 }
 
