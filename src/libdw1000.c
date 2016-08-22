@@ -481,6 +481,20 @@ dwTime_t dwSetDelay(dwDevice_t* dev, const dwTime_t* delay) {
 	return futureTime;
 }
 
+void dwSetTxRxTime(dwDevice_t* dev, const dwTime_t futureTime) {
+	if(dev->deviceMode == TX_MODE) {
+		setBit(dev->sysctrl, LEN_SYS_CTRL, TXDLYS_BIT, true);
+	} else if(dev->deviceMode == RX_MODE) {
+		setBit(dev->sysctrl, LEN_SYS_CTRL, RXDLYS_BIT, true);
+	} else {
+    return;
+	}
+	uint8_t delayBytes[5];
+  memcpy(delayBytes, futureTime.raw, sizeof(futureTime.raw));
+	delayBytes[0] = 0;
+	delayBytes[1] &= 0xFE;
+	dwSpiWrite(dev, DX_TIME, NO_SUB, delayBytes, LEN_DX_TIME);
+}
 
 
 void dwSetDataRate(dwDevice_t* dev, uint8_t rate) {
