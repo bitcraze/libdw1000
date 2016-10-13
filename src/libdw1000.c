@@ -769,12 +769,14 @@ bool dwIsClockProblem(dwDevice_t* dev) {
 
 void dwClearAllStatus(dwDevice_t* dev) {
 	memset(dev->sysstatus, 0, LEN_SYS_STATUS);
-	dwSpiWrite(dev, SYS_STATUS, NO_SUB, dev->sysstatus, LEN_SYS_STATUS);
+  uint32_t reg = 0xffffffff;
+	dwSpiWrite(dev, SYS_STATUS, NO_SUB,  &reg, LEN_SYS_STATUS);
 }
 
 void dwClearReceiveTimestampAvailableStatus(dwDevice_t* dev) {
-	setBit(dev->sysstatus, LEN_SYS_STATUS, LDEDONE_BIT, true);
-	dwSpiWrite(dev, SYS_STATUS, NO_SUB, dev->sysstatus, LEN_SYS_STATUS);
+  uint8_t reg[LEN_SYS_STATUS] = {0};
+	setBit(reg, LEN_SYS_STATUS, LDEDONE_BIT, true);
+	dwSpiWrite(dev, SYS_STATUS, NO_SUB, reg, LEN_SYS_STATUS);
 }
 
 void dwClearReceiveStatus(dwDevice_t* dev) {
@@ -793,11 +795,12 @@ void dwClearReceiveStatus(dwDevice_t* dev) {
 
 void dwClearTransmitStatus(dwDevice_t* dev) {
 	// clear latched TX bits
-	setBit(dev->sysstatus, LEN_SYS_STATUS, TXFRB_BIT, true);
-	setBit(dev->sysstatus, LEN_SYS_STATUS, TXPRS_BIT, true);
-	setBit(dev->sysstatus, LEN_SYS_STATUS, TXPHS_BIT, true);
-	setBit(dev->sysstatus, LEN_SYS_STATUS, TXFRS_BIT, true);
-	dwSpiWrite(dev, SYS_STATUS, NO_SUB, dev->sysstatus, LEN_SYS_STATUS);
+  uint8_t reg[LEN_SYS_STATUS] = {0};
+	setBit(reg, LEN_SYS_STATUS, TXFRB_BIT, true);
+	setBit(reg, LEN_SYS_STATUS, TXPRS_BIT, true);
+	setBit(reg, LEN_SYS_STATUS, TXPHS_BIT, true);
+	setBit(reg, LEN_SYS_STATUS, TXFRS_BIT, true);
+	dwSpiWrite(dev, SYS_STATUS, NO_SUB, reg, LEN_SYS_STATUS);
 }
 
 float dwGetReceiveQuality(dwDevice_t* dev) {
@@ -1242,38 +1245,36 @@ void dwHandleInterrupt(dwDevice_t *dev) {
 	if(dwIsClockProblem(dev) /* TODO and others */ && _handleError != 0) {
 		(*_handleError)();
 	}
-	if(dwIsTransmitDone(dev) && dev->handleSent != 0) {
+	else if(dwIsTransmitDone(dev) && dev->handleSent != 0) {
+    dwClearTransmitStatus(dev);
 		(*dev->handleSent)(dev);
-		dwClearTransmitStatus(dev);
 	}
-	if(dwIsReceiveTimestampAvailable(dev) && _handleReceiveTimestampAvailable != 0) {
+	else if(dwIsReceiveTimestampAvailable(dev) && _handleReceiveTimestampAvailable != 0) {
+    dwClearReceiveTimestampAvailableStatus(dev);
 		(*_handleReceiveTimestampAvailable)();
-		dwClearReceiveTimestampAvailableStatus(dev);
 	}
-	if(dwIsReceiveFailed(dev) && dev->handleReceiveFailed != 0) {
+	else if(dwIsReceiveFailed(dev) && dev->handleReceiveFailed != 0) {
+    dwClearReceiveStatus(dev);
 		dev->handleReceiveFailed(dev);
-		dwClearReceiveStatus(dev);
 		if(dev->permanentReceive) {
 			dwNewReceive(dev);
 			dwStartReceive(dev);
 		}
 	} else if(dwIsReceiveTimeout(dev) && dev->handleReceiveTimeout != 0) {
+    dwClearReceiveStatus(dev);
 		(*dev->handleReceiveTimeout)(dev);
-		dwClearReceiveStatus(dev);
 		if(dev->permanentReceive) {
 			dwNewReceive(dev);
 			dwStartReceive(dev);
 		}
 	} else if(dwIsReceiveDone(dev) && dev->handleReceived != 0) {
+    dwClearReceiveStatus(dev);
 		(*dev->handleReceived)(dev);
-		dwClearReceiveStatus(dev);
 		if(dev->permanentReceive) {
 			dwNewReceive(dev);
 			dwStartReceive(dev);
 		}
 	}
-	// clear all status that is left unhandled
-	dwClearAllStatus(dev);
 }
 
 void dwAttachSentHandler(dwDevice_t *dev, dwHandler_t handler)
