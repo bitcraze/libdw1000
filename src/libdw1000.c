@@ -1245,15 +1245,15 @@ void dwHandleInterrupt(dwDevice_t *dev) {
 	if(dwIsClockProblem(dev) /* TODO and others */ && _handleError != 0) {
 		(*_handleError)();
 	}
-	else if(dwIsTransmitDone(dev) && dev->handleSent != 0) {
+	if(dwIsTransmitDone(dev) && dev->handleSent != 0) {
     dwClearTransmitStatus(dev);
 		(*dev->handleSent)(dev);
 	}
-	else if(dwIsReceiveTimestampAvailable(dev) && _handleReceiveTimestampAvailable != 0) {
+	if(dwIsReceiveTimestampAvailable(dev) && _handleReceiveTimestampAvailable != 0) {
     dwClearReceiveTimestampAvailableStatus(dev);
 		(*_handleReceiveTimestampAvailable)();
 	}
-	else if(dwIsReceiveFailed(dev) && dev->handleReceiveFailed != 0) {
+	if(dwIsReceiveFailed(dev) && dev->handleReceiveFailed != 0) {
     dwClearReceiveStatus(dev);
 		dev->handleReceiveFailed(dev);
 		if(dev->permanentReceive) {
