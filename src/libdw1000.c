@@ -668,6 +668,11 @@ void dwGetReceiveTimestamp(dwDevice_t* dev, dwTime_t* time) {
 	dwCorrectTimestamp(dev, time);
 }
 
+void dwGetRawReceiveTimestamp(dwDevice_t* dev, dwTime_t* time) {
+  time->full = 0;
+	dwSpiRead(dev, RX_TIME, RX_STAMP_SUB, time->raw, LEN_RX_STAMP);
+}
+
 void dwCorrectTimestamp(dwDevice_t* dev, dwTime_t* timestamp) {
 	// base line dBm, which is -61, 2 dBm steps, total 18 data points (down to -95 dBm)
 	float rxPowerBase = -(dwGetReceivePower(dev) + 61.0f) * 0.5f;

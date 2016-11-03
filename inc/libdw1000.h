@@ -155,6 +155,7 @@ unsigned int dwGetDataLength(dwDevice_t* dev);
 void dwGetData(dwDevice_t* dev, uint8_t data[], unsigned int n);
 void dwGetTransmitTimestamp(dwDevice_t* dev, dwTime_t* time);
 void dwGetReceiveTimestamp(dwDevice_t* dev, dwTime_t* time);
+void dwGetRawReceiveTimestamp(dwDevice_t* dev, dwTime_t* time);
 void dwCorrectTimestamp(dwDevice_t* dev, dwTime_t* timestamp);
 void dwGetSystemTimestamp(dwDevice_t* dev, dwTime_t* time);
 bool dwIsTransmitDone(dwDevice_t* dev);
