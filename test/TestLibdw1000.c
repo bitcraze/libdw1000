@@ -316,7 +316,7 @@ static void verifyGdwGetFirstPathPower(uint16_t fpAmpl1, uint16_t fpAmpl2,
   float actual = dwGetFirstPathPower(&dev);
 
   // Assert
-  TEST_ASSERT_FLOAT_WITHIN(0.00001, expected, actual);
+  TEST_ASSERT_FLOAT_WITHIN(0.00002, expected, actual);
 }
 
 
@@ -335,5 +335,5 @@ static void verifyGetReceivePower(uint16_t cirPwr, uint8_t* rxFrameInfo, uint8_t
   float actual = dwGetReceivePower(&dev);
 
   // Assert
-  TEST_ASSERT_FLOAT_WITHIN(0.00001, expected, actual);
+  TEST_ASSERT_FLOAT_WITHIN(0.00003, expected, actual);
 }
