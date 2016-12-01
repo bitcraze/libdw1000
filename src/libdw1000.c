@@ -829,14 +829,14 @@ static float calculatePower(float base, float N, uint8_t pulseFrequency) {
   float A, corrFac;
 
 	if(TX_PULSE_FREQ_16MHZ == pulseFrequency) {
-		A = 115.72;
-		corrFac = 2.3334;
+		A = 115.72f;
+		corrFac = 2.3334f;
 	} else {
-		A = 121.74;
-		corrFac = 1.1667;
+		A = 121.74f;
+		corrFac = 1.1667f;
 	}
 
-	float estFpPwr = 10.0 * log10(base / (N * N)) - A;
+	float estFpPwr = 10.0f * log10f(base / (N * N)) - A;
 
 	if(estFpPwr <= -88) {
 		return estFpPwr;
@@ -861,7 +861,7 @@ float dwGetReceivePower(dwDevice_t* dev) {
   float C = (float)dwSpiRead16(dev, RX_FQUAL, CIR_PWR_SUB);
   float N = spiReadRxInfo(dev);
 
-  float twoPower17 = 131072.0;
+  float twoPower17 = 131072.0f;
 
   return calculatePower(C * twoPower17, N, dev->pulseFrequency);
 }
