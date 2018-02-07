@@ -175,6 +175,11 @@ void dwEnableMode(dwDevice_t *dev, const uint8_t mode[]);
 void dwTune(dwDevice_t *dev);
 void dwHandleInterrupt(dwDevice_t *dev);
 
+/**
+ * Set the value of the TXPower register
+ */
+void dwSetTxPower(dwDevice_t *dev, uint32_t txPower);
+
 void dwAttachSentHandler(dwDevice_t *dev, dwHandler_t handler);
 void dwAttachReceivedHandler(dwDevice_t *dev, dwHandler_t handler);
 void dwAttachReceiveTimeoutHandler(dwDevice_t *dev, dwHandler_t handler);

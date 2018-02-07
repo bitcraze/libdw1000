@@ -73,6 +73,8 @@ void dwInit(dwDevice_t* dev, dwOps_t* ops)
   dev->permanentReceive = false;
   dev->deviceMode = IDLE_MODE;
 
+  dev->forceTxPower = false;
+
   writeValueToBytes(dev->antennaDelay.raw, 16384, LEN_STAMP);
 
   // Dummy callback handlers
@@ -1134,7 +1136,9 @@ void dwTune(dwDevice_t *dev) {
 		// TODO proper error/warning handling
 	}
 	// TX_POWER (enabled smart transmit power control)
-	if(dev->channel == CHANNEL_1 || dev->channel == CHANNEL_2) {
+  if(dev->forceTxPower) {
+    writeValueToBytes(txpower, dev->txPower, LEN_TX_POWER);
+  } else if(dev->channel == CHANNEL_1 || dev->channel == CHANNEL_2) {
 		if(dev->pulseFrequency == TX_PULSE_FREQ_16MHZ) {
 			if(dev->smartPower) {
 				writeValueToBytes(txpower, 0x15355575L, LEN_TX_POWER);
@@ -1280,6 +1284,12 @@ void dwHandleInterrupt(dwDevice_t *dev) {
 			dwStartReceive(dev);
 		}
 	}
+}
+
+void dwSetTxPower(dwDevice_t *dev, uint32_t txPower)
+{
+  dev->forceTxPower = true;
+  dev->txPower = txPower;
 }
 
 void dwAttachSentHandler(dwDevice_t *dev, dwHandler_t handler)

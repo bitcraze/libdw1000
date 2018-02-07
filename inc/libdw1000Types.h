@@ -82,6 +82,10 @@ typedef struct dwDevice_s {
   dwHandler_t handleReceived;
   dwHandler_t handleReceiveTimeout;
   dwHandler_t handleReceiveFailed;
+
+  // settings
+  uint32_t txPower;
+  bool forceTxPower;
 } dwDevice_t;
 
 typedef enum {dwSpiSpeedLow, dwSpiSpeedHigh} dwSpiSpeed_t;
