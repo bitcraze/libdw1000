@@ -51,6 +51,8 @@ static void setBit(uint8_t data[], unsigned int n, unsigned int bit, bool val);
 static void writeValueToBytes(uint8_t data[], long val, unsigned int n);
 static bool getBit(uint8_t data[], unsigned int n, unsigned int bit);
 
+static void readBytesOTP(dwDevice_t* dev, uint16_t address, uint8_t data[]);
+
 static void dummy(){
   ;
 }
@@ -901,7 +903,7 @@ void dwTune(dwDevice_t *dev) {
 	uint8_t tcpgdelay[LEN_TC_PGDELAY];
 	uint8_t fspllcfg[LEN_FS_PLLCFG];
 	uint8_t fsplltune[LEN_FS_PLLTUNE];
-	// uint8_t fsxtalt[LEN_FS_XTALT];
+	uint8_t fsxtalt[LEN_FS_XTALT];
 	// AGC_TUNE1
 	if(dev->pulseFrequency == TX_PULSE_FREQ_16MHZ) {
 		writeValueToBytes(agctune1, 0x8870, LEN_AGC_TUNE1);
@@ -1221,8 +1223,15 @@ void dwTune(dwDevice_t *dev) {
 	} else {
 		// TODO proper error/warning handling
 	}
-	// mid range XTAL trim (TODO here we assume no calibration data available in OTP)
-	//writeValueToBytes(fsxtalt, 0x60, LEN_FS_XTALT);
+	// Crystal calibration from OTP (if available)
+  uint8_t buf_otp[4];
+  readBytesOTP(dev, 0x01E, buf_otp);
+  if (buf_otp[0] == 0) {
+    // No trim value available from OTP, use midrange value of 0x10
+    writeValueToBytes(fsxtalt, ((0x10 & 0x1F) | 0x60), LEN_FS_XTALT);
+  } else {
+    writeValueToBytes(fsxtalt, ((buf_otp[0] & 0x1F) | 0x60), LEN_FS_XTALT);
+  }
 	// write configuration back to chip
 	dwSpiWrite(dev, AGC_TUNE, AGC_TUNE1_SUB, agctune1, LEN_AGC_TUNE1);
 	dwSpiWrite(dev, AGC_TUNE, AGC_TUNE2_SUB, agctune2, LEN_AGC_TUNE2);
@@ -1241,7 +1250,7 @@ void dwTune(dwDevice_t *dev) {
 	dwSpiWrite(dev, TX_CAL, TC_PGDELAY_SUB, tcpgdelay, LEN_TC_PGDELAY);
 	dwSpiWrite(dev, FS_CTRL, FS_PLLTUNE_SUB, fsplltune, LEN_FS_PLLTUNE);
 	dwSpiWrite(dev, FS_CTRL, FS_PLLCFG_SUB, fspllcfg, LEN_FS_PLLCFG);
-	//dwSpiWrite(dev, FS_CTRL, FS_XTALT_SUB, fsxtalt, LEN_FS_XTALT);
+	dwSpiWrite(dev, FS_CTRL, FS_XTALT_SUB, fsxtalt, LEN_FS_XTALT);
 }
 
 // FIXME: This is a test!
@@ -1357,4 +1366,22 @@ static void writeValueToBytes(uint8_t data[], long val, unsigned int n) {
 	for(i = 0; i < n; i++) {
 		data[i] = ((val >> (i * 8)) & 0xFF);
 	}
+}
+
+static void readBytesOTP(dwDevice_t* dev, uint16_t address, uint8_t data[]) {
+	uint8_t addressBytes[LEN_OTP_ADDR];
+
+	// p60 - 6.3.3 Reading a value from OTP memory
+	// bytes of address
+	addressBytes[0] = (address & 0xFF);
+	addressBytes[1] = ((address >> 8) & 0xFF);
+	// set address
+	dwSpiWrite(dev, OTP_IF, OTP_ADDR_SUB, addressBytes, LEN_OTP_ADDR);
+	// switch into read mode
+	dwSpiWrite8(dev, OTP_IF, OTP_CTRL_SUB, 0x03); // OTPRDEN | OTPREAD
+	dwSpiWrite8(dev, OTP_IF, OTP_CTRL_SUB, 0x01); // OTPRDEN
+	// read value/block - 4 bytes
+	dwSpiRead(dev, OTP_IF, OTP_RDAT_SUB, data, LEN_OTP_RDAT);
+	// end read mode
+	dwSpiWrite8(dev, OTP_IF, OTP_CTRL_SUB, 0x00);
 }
