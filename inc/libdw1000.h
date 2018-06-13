@@ -35,6 +35,8 @@ extern const uint8_t MODE_LONGDATA_FAST_LOWPOWER[];
 extern const uint8_t MODE_SHORTDATA_FAST_ACCURACY[];
 extern const uint8_t MODE_LONGDATA_FAST_ACCURACY[];
 extern const uint8_t MODE_LONGDATA_RANGE_ACCURACY[];
+extern const uint8_t MODE_SHORTDATA_MID_ACCURACY[];
+extern const uint8_t MODE_LONGDATA_MID_ACCURACY[];
 
 /**
  * Initialize the device data structure.
