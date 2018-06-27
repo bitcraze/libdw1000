@@ -83,6 +83,10 @@ void dwSpiWrite(dwDevice_t *dev, uint8_t regid, uint32_t address,
   dev->ops->spiWrite(dev, header, headerLength, data, length);
 }
 
+void dwSpiWrite8(dwDevice_t *dev, uint8_t regid, uint32_t address, uint8_t data) {
+  dwSpiWrite(dev, regid, address, &data, sizeof(data));
+}
+
 void dwSpiWrite32(dwDevice_t *dev, uint8_t regid, uint32_t address,
                                    uint32_t data) {
   dwSpiWrite(dev, regid, address, &data, sizeof(data));
