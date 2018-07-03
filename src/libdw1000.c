@@ -1272,7 +1272,7 @@ void dwHandleInterrupt(dwDevice_t *dev) {
 	}
 	if(dwIsReceiveFailed(dev)) {
 		dwClearReceiveStatus(dev);
-		dwRxSoftReset(dev); // Needed due to error in the RX auto-re-enable functionnality. See page 35 of DW1000 manual, v2.13.
+		dwRxSoftReset(dev); // Needed due to error in the RX auto-re-enable functionality. See page 35 of DW1000 manual, v2.13.
 		if(dev->handleReceiveFailed != 0) {
 			dev->handleReceiveFailed(dev);
 			if(dev->permanentReceive) {
@@ -1282,7 +1282,7 @@ void dwHandleInterrupt(dwDevice_t *dev) {
 		}
 	} else if(dwIsReceiveTimeout(dev)) {
 		dwClearReceiveStatus(dev);
-		dwRxSoftReset(dev); // Needed due to error in the RX auto-re-enable functionnality. See page 35 of DW1000 manual, v2.13.
+		dwRxSoftReset(dev); // Needed due to error in the RX auto-re-enable functionality. See page 35 of DW1000 manual, v2.13.
 		if(dev->handleReceiveTimeout != 0) {
 			(*dev->handleReceiveTimeout)(dev);
 			if(dev->permanentReceive) {
