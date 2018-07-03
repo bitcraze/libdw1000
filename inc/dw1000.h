@@ -96,7 +96,10 @@
 #define TXPRS_BIT 5
 #define TXPHS_BIT 6
 #define TXFRS_BIT 7
+#define RXPRD_BIT 8
+#define MRXSFDD_BIT 9
 #define LDEDONE_BIT 10
+#define MRXPHD_BIT 11
 #define RXPHE_BIT 12
 #define RXDFR_BIT 13
 #define RXFCG_BIT 14
@@ -104,8 +107,23 @@
 #define RXRFSL_BIT 16
 #define RXRFTO_BIT 17
 #define LDEERR_BIT 18
+// Bit 19 is reserved
+#define RXOVRR_BIT 20
+#define RXPTO_BIT 21
 #define RFPLL_LL_BIT 24
 #define CLKPLL_LL_BIT 25
+#define RXSFDTO_BIT 26
+#define AFFREJ_BIT 29
+
+// Helper masks. See: See: https://github.com/Decawave/dwm1001-examples/blob/master/deca_driver/deca_regs.h
+// All RX errors mask
+#define SYS_STATUS_ALL_RX_ERR (1 << RXPHE_BIT | 1 << RXFCE_BIT | 1 << RXRFSL_BIT | 1 << RXSFDTO_BIT | 1 << AFFREJ_BIT | 1 << LDEERR_BIT)
+// User defined RX timeouts (frame wait timeout and preamble detect timeout) mask
+#define SYS_STATUS_ALL_RX_TO (1 << RXRFTO_BIT | 1 << RXPTO_BIT)
+// All RX events after a correct packet reception mask
+#define SYS_STATUS_ALL_RX_GOOD (1 << RXDFR_BIT | 1 << RXFCG_BIT | 1 << RXPRD_BIT | 1 << MRXSFDD_BIT | 1 << MRXPHD_BIT | 1 << LDEDONE_BIT)
+// All TX events mask
+#define SYS_STATUS_ALL_TX (1 << AAT_BIT | 1 << TXFRB_BIT | 1 << TXPRS_BIT | 1 << TXPHS_BIT | 1 << TXFRS_BIT)
 
 // GPIO control register
 #define GPIO_CTRL 0x26
