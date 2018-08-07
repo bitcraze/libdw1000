@@ -249,6 +249,20 @@ void dwSoftReset(dwDevice_t* dev)
   dwIdle(dev);
 }
 
+/**
+ Reset the receiver. Needed after errors or timeouts.
+ From the DW1000 User Manual, v2.13 page 35: "Due to an issue in the re-initialisation of the receiver, it is necessary to apply a receiver reset after certain receiver error or timeout events (i.e. RXPHE (PHY Header Error), RXRFSL (Reed Solomon error), RXRFTO (Frame wait timeout), etc.). This ensures that the next good frame will have correctly calculated timestamp. It is not necessary to do this in the cases of RXPTO (Preamble detection Timeout) and RXSFDTO (SFD timeout). For details on how to apply a receiver-only reset see SOFTRESET field of Sub- Register 0x36:00 – PMSC_CTRL0."
+ */
+void dwRxSoftReset(dwDevice_t* dev) {
+	uint8_t pmscctrl0[LEN_PMSC_CTRL0];
+	dwSpiRead(dev, PMSC, PMSC_CTRL0_SUB, pmscctrl0, LEN_PMSC_CTRL0);
+
+	pmscctrl0[3] = pmscctrl0[3] & 0xEF;
+	dwSpiWrite(dev, PMSC, PMSC_CTRL0_SUB, pmscctrl0, LEN_PMSC_CTRL0);
+	pmscctrl0[3] = pmscctrl0[3] | 0x10;
+	dwSpiWrite(dev, PMSC, PMSC_CTRL0_SUB, pmscctrl0, LEN_PMSC_CTRL0);
+}
+
 /* ###########################################################################
  * #### DW1000 register read/write ###########################################
  * ######################################################################### */
@@ -358,10 +372,13 @@ void dwInterruptOnReceiveFailed(dwDevice_t* dev, bool val) {
 	setBit(dev->sysmask, LEN_SYS_STATUS, RXFCE_BIT, val);
 	setBit(dev->sysmask, LEN_SYS_STATUS, RXPHE_BIT, val);
 	setBit(dev->sysmask, LEN_SYS_STATUS, RXRFSL_BIT, val);
+	setBit(dev->sysmask, LEN_SYS_MASK, RXSFDTO_BIT, val);
+	setBit(dev->sysmask, LEN_SYS_MASK, AFFREJ_BIT, val);
 }
 
 void dwInterruptOnReceiveTimeout(dwDevice_t* dev, bool val) {
 	setBit(dev->sysmask, LEN_SYS_MASK, RXRFTO_BIT, val);
+	setBit(dev->sysmask, LEN_SYS_MASK, RXPTO_BIT, val);
 }
 
 void dwInterruptOnReceiveTimestampAvailable(dwDevice_t* dev, bool val) {
@@ -753,19 +770,11 @@ bool dwIsReceiveDone(dwDevice_t* dev) {
 }
 
 bool dwIsReceiveFailed(dwDevice_t *dev) {
-	bool ldeErr, rxCRCErr, rxHeaderErr, rxDecodeErr;
-	ldeErr = getBit(dev->sysstatus, LEN_SYS_STATUS, LDEERR_BIT);
-	rxCRCErr = getBit(dev->sysstatus, LEN_SYS_STATUS, RXFCE_BIT);
-	rxHeaderErr = getBit(dev->sysstatus, LEN_SYS_STATUS, RXPHE_BIT);
-	rxDecodeErr = getBit(dev->sysstatus, LEN_SYS_STATUS, RXRFSL_BIT);
-	if(ldeErr || rxCRCErr || rxHeaderErr || rxDecodeErr) {
-		return true;
-	}
-	return false;
+	return *(uint32_t*)dev->sysstatus & SYS_STATUS_ALL_RX_ERR;
 }
 
 bool dwIsReceiveTimeout(dwDevice_t* dev) {
-	return getBit(dev->sysstatus, LEN_SYS_STATUS, RXRFTO_BIT);
+	return *(uint32_t*)dev->sysstatus & SYS_STATUS_ALL_RX_TO;
 }
 
 bool dwIsClockProblem(dwDevice_t* dev) {
@@ -792,26 +801,14 @@ void dwClearReceiveTimestampAvailableStatus(dwDevice_t* dev) {
 
 void dwClearReceiveStatus(dwDevice_t* dev) {
 	// clear latched RX bits (i.e. write 1 to clear)
-  uint8_t reg[LEN_SYS_STATUS] = {0};
-	setBit(reg, LEN_SYS_STATUS, RXDFR_BIT, true);
-	setBit(reg, LEN_SYS_STATUS, LDEDONE_BIT, true);
-	setBit(reg, LEN_SYS_STATUS, LDEERR_BIT, true);
-	setBit(reg, LEN_SYS_STATUS, RXPHE_BIT, true);
-	setBit(reg, LEN_SYS_STATUS, RXFCE_BIT, true);
-	setBit(reg, LEN_SYS_STATUS, RXFCG_BIT, true);
-	setBit(reg, LEN_SYS_STATUS, RXRFSL_BIT, true);
-  setBit(reg, LEN_SYS_STATUS, RXRFTO_BIT, true);
-	dwSpiWrite(dev, SYS_STATUS, NO_SUB, reg, LEN_SYS_STATUS);
+	uint32_t regData = SYS_STATUS_ALL_RX_TO | SYS_STATUS_ALL_RX_ERR | SYS_STATUS_ALL_RX_GOOD;
+	dwSpiWrite32(dev, SYS_STATUS, NO_SUB, regData);
 }
 
 void dwClearTransmitStatus(dwDevice_t* dev) {
 	// clear latched TX bits
-  uint8_t reg[LEN_SYS_STATUS] = {0};
-	setBit(reg, LEN_SYS_STATUS, TXFRB_BIT, true);
-	setBit(reg, LEN_SYS_STATUS, TXPRS_BIT, true);
-	setBit(reg, LEN_SYS_STATUS, TXPHS_BIT, true);
-	setBit(reg, LEN_SYS_STATUS, TXFRS_BIT, true);
-	dwSpiWrite(dev, SYS_STATUS, NO_SUB, reg, LEN_SYS_STATUS);
+	uint32_t regData = SYS_STATUS_ALL_TX;
+	dwSpiWrite32(dev, SYS_STATUS, NO_SUB, regData);
 }
 
 float dwGetReceiveQuality(dwDevice_t* dev) {
@@ -1273,19 +1270,25 @@ void dwHandleInterrupt(dwDevice_t *dev) {
     dwClearReceiveTimestampAvailableStatus(dev);
 		(*_handleReceiveTimestampAvailable)();
 	}
-	if(dwIsReceiveFailed(dev) && dev->handleReceiveFailed != 0) {
-    dwClearReceiveStatus(dev);
-		dev->handleReceiveFailed(dev);
-		if(dev->permanentReceive) {
-			dwNewReceive(dev);
-			dwStartReceive(dev);
+	if(dwIsReceiveFailed(dev)) {
+		dwClearReceiveStatus(dev);
+		dwRxSoftReset(dev); // Needed due to error in the RX auto-re-enable functionality. See page 35 of DW1000 manual, v2.13.
+		if(dev->handleReceiveFailed != 0) {
+			dev->handleReceiveFailed(dev);
+			if(dev->permanentReceive) {
+				dwNewReceive(dev);
+				dwStartReceive(dev);
+			}
 		}
-	} else if(dwIsReceiveTimeout(dev) && dev->handleReceiveTimeout != 0) {
-    dwClearReceiveStatus(dev);
-		(*dev->handleReceiveTimeout)(dev);
-		if(dev->permanentReceive) {
-			dwNewReceive(dev);
-			dwStartReceive(dev);
+	} else if(dwIsReceiveTimeout(dev)) {
+		dwClearReceiveStatus(dev);
+		dwRxSoftReset(dev); // Needed due to error in the RX auto-re-enable functionality. See page 35 of DW1000 manual, v2.13.
+		if(dev->handleReceiveTimeout != 0) {
+			(*dev->handleReceiveTimeout)(dev);
+			if(dev->permanentReceive) {
+				dwNewReceive(dev);
+				dwStartReceive(dev);
+			}
 		}
 	} else if(dwIsReceiveDone(dev) && dev->handleReceived != 0) {
     dwClearReceiveStatus(dev);
