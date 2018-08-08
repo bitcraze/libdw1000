@@ -770,11 +770,20 @@ bool dwIsReceiveDone(dwDevice_t* dev) {
 }
 
 bool dwIsReceiveFailed(dwDevice_t *dev) {
-	return *(uint32_t*)dev->sysstatus & SYS_STATUS_ALL_RX_ERR;
+	bool ldeErr = getBit(dev->sysstatus, LEN_SYS_STATUS, LDEERR_BIT);
+	bool rxCRCErr = getBit(dev->sysstatus, LEN_SYS_STATUS, RXFCE_BIT);
+	bool rxHeaderErr = getBit(dev->sysstatus, LEN_SYS_STATUS, RXPHE_BIT);
+	bool rxDecodeErr = getBit(dev->sysstatus, LEN_SYS_STATUS, RXRFSL_BIT);
+
+
+	bool rxSfdto = getBit(dev->sysstatus, LEN_SYS_STATUS, RXSFDTO_BIT);
+	bool affrej = getBit(dev->sysstatus, LEN_SYS_STATUS, AFFREJ_BIT);
+
+	return (ldeErr || rxCRCErr || rxHeaderErr || rxDecodeErr || rxSfdto || affrej);
 }
 
 bool dwIsReceiveTimeout(dwDevice_t* dev) {
-	return *(uint32_t*)dev->sysstatus & SYS_STATUS_ALL_RX_TO;
+	return getBit(dev->sysstatus, LEN_SYS_STATUS, RXRFTO_BIT);
 }
 
 bool dwIsClockProblem(dwDevice_t* dev) {
