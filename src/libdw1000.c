@@ -704,10 +704,10 @@ void dwCorrectTimestamp(dwDevice_t* dev, dwTime_t* timestamp) {
 	}
 	int rxPowerBaseLow = (int)rxPowerBase;
 	int rxPowerBaseHigh = rxPowerBaseLow + 1;
-	if(rxPowerBaseLow < 0) {
+	if(rxPowerBaseLow <= 0) {
 		rxPowerBaseLow = 0;
 		rxPowerBaseHigh = 0;
-	} else if(rxPowerBaseHigh > 17) {
+	} else if(rxPowerBaseHigh >= 17) {
 		rxPowerBaseLow = 17;
 		rxPowerBaseHigh = 17;
 	}
@@ -747,7 +747,7 @@ void dwCorrectTimestamp(dwDevice_t* dev, dwTime_t* timestamp) {
 	dwTime_t adjustmentTime;
   adjustmentTime.full = (int)(rangeBias * DISTANCE_OF_RADIO_INV * 0.001f);
 	// apply correction
-	timestamp->full += adjustmentTime.full;
+	timestamp->full -= adjustmentTime.full;
 }
 
 void dwGetSystemTimestamp(dwDevice_t* dev, dwTime_t* time) {
@@ -841,7 +841,7 @@ static float calculatePower(float base, float N, uint8_t pulseFrequency) {
   float A, corrFac;
 
 	if(TX_PULSE_FREQ_16MHZ == pulseFrequency) {
-		A = 115.72f;
+		A = 113.77f;
 		corrFac = 2.3334f;
 	} else {
 		A = 121.74f;
