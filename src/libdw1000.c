@@ -56,71 +56,71 @@ static bool getBit(uint8_t data[], unsigned int n, unsigned int bit);
 static void readBytesOTP(dwDevice_t* dev, uint16_t address, uint8_t data[]);
 
 static void dummy(){
-  ;
+	;
 }
 
 void dwInit(dwDevice_t* dev, dwOps_t* ops)
 {
-  dev->ops = ops;
-  dev->userdata = NULL;
+	dev->ops = ops;
+	dev->userdata = NULL;
 
-  /* Device default state */
-  dev->extendedFrameLength = FRAME_LENGTH_NORMAL;
-  dev->pacSize = PAC_SIZE_8;
-  dev->pulseFrequency = TX_PULSE_FREQ_16MHZ;
-  dev->dataRate = TRX_RATE_6800KBPS;
-  dev->preambleLength = TX_PREAMBLE_LEN_128;
-  dev->preambleCode = PREAMBLE_CODE_16MHZ_4;
-  dev->channel = CHANNEL_5;
-  dev->smartPower = false;
-  dev->frameCheck = true;
-  dev->permanentReceive = false;
-  dev->deviceMode = IDLE_MODE;
+	/* Device default state */
+	dev->extendedFrameLength = FRAME_LENGTH_NORMAL;
+	dev->pacSize = PAC_SIZE_8;
+	dev->pulseFrequency = TX_PULSE_FREQ_16MHZ;
+	dev->dataRate = TRX_RATE_6800KBPS;
+	dev->preambleLength = TX_PREAMBLE_LEN_128;
+	dev->preambleCode = PREAMBLE_CODE_16MHZ_4;
+	dev->channel = CHANNEL_5;
+	dev->smartPower = false;
+	dev->frameCheck = true;
+	dev->permanentReceive = false;
+	dev->deviceMode = IDLE_MODE;
 
-  dev->forceTxPower = false;
+	dev->forceTxPower = false;
 
-  writeValueToBytes(dev->antennaDelay.raw, 16384, LEN_STAMP);
+	writeValueToBytes(dev->antennaDelay.raw, 16384, LEN_STAMP);
 
-  // Dummy callback handlers
-  dev->handleSent = dummy;
-  dev->handleReceived = dummy;
-  dev->handleReceiveFailed = dummy;
+	// Dummy callback handlers
+	dev->handleSent = dummy;
+	dev->handleReceived = dummy;
+	dev->handleReceiveFailed = dummy;
 
 }
 
 void dwSetUserdata(dwDevice_t* dev, void* userdata)
 {
-  dev->userdata = userdata;
+	dev->userdata = userdata;
 }
 
 void* dwGetUserdata(dwDevice_t* dev)
 {
-  return dev->userdata;
+	return dev->userdata;
 }
 
 int dwConfigure(dwDevice_t* dev)
 {
-  dwEnableClock(dev, dwClockAuto);
-  delayms(5);
+	dwEnableClock(dev, dwClockAuto);
+	delayms(5);
 
-  // Reset the chip
-  if (dev->ops->reset) {
-    dev->ops->reset(dev);
-  } else {
-    dwSoftReset(dev);
-  }
+	// Reset the chip
+	if (dev->ops->reset) {
+		dev->ops->reset(dev);
+	} else {
+		dwSoftReset(dev);
+	}
 
-  if (dwGetDeviceId(dev) != 0xdeca0130) {
-    return DW_ERROR_WRONG_ID;
-  }
+	if (dwGetDeviceId(dev) != 0xdeca0130) {
+		return DW_ERROR_WRONG_ID;
+	}
 
-  // Set default address
-  memset(dev->networkAndAddress, 0xff, LEN_PANADR);
-  dwSpiWrite(dev, PANADR, NO_SUB, dev->networkAndAddress, LEN_PANADR);
+	// Set default address
+	memset(dev->networkAndAddress, 0xff, LEN_PANADR);
+	dwSpiWrite(dev, PANADR, NO_SUB, dev->networkAndAddress, LEN_PANADR);
 
-  // default configuration
-  memset(dev->syscfg, 0, LEN_SYS_CFG);
-  dwSetDoubleBuffering(dev, false);
+	// default configuration
+	memset(dev->syscfg, 0, LEN_SYS_CFG);
+	dwSetDoubleBuffering(dev, false);
 	dwSetInterruptPolarity(dev, true);
 	dwWriteSystemConfigurationRegister(dev);
 	// default interrupt mask, i.e. no interrupts
@@ -133,22 +133,22 @@ int dwConfigure(dwDevice_t* dev)
 	delayms(5);
 	dwEnableClock(dev, dwClockPll);
 	delayms(5);
-  //dev->ops->spiSetSpeed(dev, dwSpiSpeedHigh);
+	//dev->ops->spiSetSpeed(dev, dwSpiSpeedHigh);
 
-  // //Enable LED clock
-  // dwSpiWrite32(dev, PMSC, PMSC_CTRL0_SUB, dwSpiRead32(dev, PMSC, PMSC_CTRL0_SUB) | 0x008C0000);
-  //
-  // // Setup all LEDs
-  //
-  // dwSpiWrite32(dev, 0x26, 0x00, dwSpiRead32(dev, 0x26, 0x00) | 0x1540);
-  //
-  // // Start the pll
-  //
-  // delayms(1);
+	// //Enable LED clock
+	// dwSpiWrite32(dev, PMSC, PMSC_CTRL0_SUB, dwSpiRead32(dev, PMSC, PMSC_CTRL0_SUB) | 0x008C0000);
+	//
+	// // Setup all LEDs
+	//
+	// dwSpiWrite32(dev, 0x26, 0x00, dwSpiRead32(dev, 0x26, 0x00) | 0x1540);
+	//
+	// // Start the pll
+	//
+	// delayms(1);
 
-  // Initialize for default configuration (as per datasheet)
+	// Initialize for default configuration (as per datasheet)
 
-  return DW_ERROR_OK;
+	return DW_ERROR_OK;
 }
 
 void dwManageLDE(dwDevice_t* dev) {
@@ -181,33 +181,33 @@ void dwManageLDE(dwDevice_t* dev) {
 
 uint32_t dwGetDeviceId(dwDevice_t* dev)
 {
-  return dwSpiRead32(dev, DEV_ID, 0);
+	return dwSpiRead32(dev, DEV_ID, 0);
 }
 
 void dwEnableAllLeds(dwDevice_t* dev)
 {
-  uint32_t reg;
+	uint32_t reg;
 
-  // Set all 4 GPIO in LED mode
-  reg = dwSpiRead32(dev, GPIO_CTRL, GPIO_MODE_SUB);
-  reg &= ~0x00003FC0ul;
-  reg |= 0x00001540ul;
-  dwSpiWrite32(dev, GPIO_CTRL, GPIO_MODE_SUB, reg);
+	// Set all 4 GPIO in LED mode
+	reg = dwSpiRead32(dev, GPIO_CTRL, GPIO_MODE_SUB);
+	reg &= ~0x00003FC0ul;
+	reg |= 0x00001540ul;
+	dwSpiWrite32(dev, GPIO_CTRL, GPIO_MODE_SUB, reg);
 
-  // Enable debounce clock (used to clock the LED blinking)
-  reg = dwSpiRead32(dev, PMSC, PMSC_CTRL0_SUB);
-  reg |= 0x00840000ul;
-  dwSpiWrite32(dev, PMSC, PMSC_CTRL0_SUB, reg);
+	// Enable debounce clock (used to clock the LED blinking)
+	reg = dwSpiRead32(dev, PMSC, PMSC_CTRL0_SUB);
+	reg |= 0x00840000ul;
+	dwSpiWrite32(dev, PMSC, PMSC_CTRL0_SUB, reg);
 
-  // Enable LED blinking and set the rate
-  reg = 0x00000110ul;
-  dwSpiWrite32(dev, PMSC, PMSC_LEDC, reg);
+	// Enable LED blinking and set the rate
+	reg = 0x00000110ul;
+	dwSpiWrite32(dev, PMSC, PMSC_LEDC, reg);
 
-  // Trigger a manual blink of the LEDs for test
-  reg |= 0x000f0000ul;
-  dwSpiWrite32(dev, PMSC, PMSC_LEDC, reg);
-  reg &= ~0x000f0000ul;
-  dwSpiWrite32(dev, PMSC, PMSC_LEDC, reg);
+	// Trigger a manual blink of the LEDs for test
+	reg |= 0x000f0000ul;
+	dwSpiWrite32(dev, PMSC, PMSC_LEDC, reg);
+	reg &= ~0x000f0000ul;
+	dwSpiWrite32(dev, PMSC, PMSC_LEDC, reg);
 }
 
 void dwEnableClock(dwDevice_t* dev, dwClock_t clock) {
@@ -215,38 +215,38 @@ void dwEnableClock(dwDevice_t* dev, dwClock_t clock) {
 	memset(pmscctrl0, 0, LEN_PMSC_CTRL0);
 	dwSpiRead(dev, PMSC, PMSC_CTRL0_SUB, pmscctrl0, LEN_PMSC_CTRL0);
 	if(clock == dwClockAuto) {
-    dev->ops->spiSetSpeed(dev, dwSpiSpeedLow);
+		dev->ops->spiSetSpeed(dev, dwSpiSpeedLow);
 		pmscctrl0[0] = dwClockAuto;
 		pmscctrl0[1] &= 0xFE;
 	} else if(clock == dwClockXti) {
-    dev->ops->spiSetSpeed(dev, dwSpiSpeedLow);
+		dev->ops->spiSetSpeed(dev, dwSpiSpeedLow);
 		pmscctrl0[0] &= 0xFC;
 		pmscctrl0[0] |= dwClockXti;
 	} else if(clock == dwClockPll) {
-    dev->ops->spiSetSpeed(dev, dwSpiSpeedHigh);
+		dev->ops->spiSetSpeed(dev, dwSpiSpeedHigh);
 		pmscctrl0[0] &= 0xFC;
 		pmscctrl0[0] |= dwClockPll;
 	} else {
 		// TODO deliver proper warning
 	}
 	dwSpiWrite(dev, PMSC, PMSC_CTRL0_SUB, pmscctrl0, 1);
-  dwSpiWrite(dev, PMSC, PMSC_CTRL0_SUB, pmscctrl0, LEN_PMSC_CTRL0);
+	dwSpiWrite(dev, PMSC, PMSC_CTRL0_SUB, pmscctrl0, LEN_PMSC_CTRL0);
 }
 
 void dwSoftReset(dwDevice_t* dev)
 {
-  uint8_t pmscctrl0[LEN_PMSC_CTRL0];
-  dwSpiRead(dev, PMSC, PMSC_CTRL0_SUB, pmscctrl0, LEN_PMSC_CTRL0);
-  pmscctrl0[0] = 0x01;
-  dwSpiWrite(dev, PMSC, PMSC_CTRL0_SUB, pmscctrl0, LEN_PMSC_CTRL0);
-  pmscctrl0[3] = 0x00;
-  dwSpiWrite(dev, PMSC, PMSC_CTRL0_SUB, pmscctrl0, LEN_PMSC_CTRL0);
-  delayms(10);
-  pmscctrl0[0] = 0x00;
-  pmscctrl0[3] = 0xF0;
-  dwSpiWrite(dev, PMSC, PMSC_CTRL0_SUB, pmscctrl0, LEN_PMSC_CTRL0);
-  // force into idle mode
-  dwIdle(dev);
+	uint8_t pmscctrl0[LEN_PMSC_CTRL0];
+	dwSpiRead(dev, PMSC, PMSC_CTRL0_SUB, pmscctrl0, LEN_PMSC_CTRL0);
+	pmscctrl0[0] = 0x01;
+	dwSpiWrite(dev, PMSC, PMSC_CTRL0_SUB, pmscctrl0, LEN_PMSC_CTRL0);
+	pmscctrl0[3] = 0x00;
+	dwSpiWrite(dev, PMSC, PMSC_CTRL0_SUB, pmscctrl0, LEN_PMSC_CTRL0);
+	delayms(10);
+	pmscctrl0[0] = 0x00;
+	pmscctrl0[3] = 0xF0;
+	dwSpiWrite(dev, PMSC, PMSC_CTRL0_SUB, pmscctrl0, LEN_PMSC_CTRL0);
+	// force into idle mode
+	dwIdle(dev);
 }
 
 /**
@@ -314,8 +314,8 @@ void dwWriteTransmitFrameControlRegister(dwDevice_t* dev) {
 /******************************************************************/
 
 void dwSetReceiveWaitTimeout(dwDevice_t *dev, uint16_t timeout) {
-  dwSpiWrite(dev, RX_FWTO, NO_SUB, &timeout, 2);
-  setBit(dev->syscfg, LEN_SYS_CFG, RXWTOE_BIT, timeout!=0);
+	dwSpiWrite(dev, RX_FWTO, NO_SUB, &timeout, 2);
+	setBit(dev->syscfg, LEN_SYS_CFG, RXWTOE_BIT, timeout!=0);
 }
 
 void dwSetFrameFilter(dwDevice_t* dev, bool val) {
@@ -323,27 +323,27 @@ void dwSetFrameFilter(dwDevice_t* dev, bool val) {
 }
 
 void dwSetFrameFilterBehaveCoordinator(dwDevice_t* dev, bool val) {
-    setBit(dev->syscfg, LEN_SYS_CFG, FFBC_BIT, val);
+	setBit(dev->syscfg, LEN_SYS_CFG, FFBC_BIT, val);
 }
 
 void dwSetFrameFilterAllowBeacon(dwDevice_t* dev, bool val) {
-    setBit(dev->syscfg, LEN_SYS_CFG, FFAB_BIT, val);
+	setBit(dev->syscfg, LEN_SYS_CFG, FFAB_BIT, val);
 }
 
 void dwSetFrameFilterAllowData(dwDevice_t* dev, bool val) {
-    setBit(dev->syscfg, LEN_SYS_CFG, FFAD_BIT, val);
+	setBit(dev->syscfg, LEN_SYS_CFG, FFAD_BIT, val);
 }
 
 void dwSetFrameFilterAllowAcknowledgement(dwDevice_t* dev, bool val) {
-    setBit(dev->syscfg, LEN_SYS_CFG, FFAA_BIT, val);
+	setBit(dev->syscfg, LEN_SYS_CFG, FFAA_BIT, val);
 }
 
 void dwSetFrameFilterAllowMAC(dwDevice_t* dev, bool val) {
-    setBit(dev->syscfg, LEN_SYS_CFG, FFAM_BIT, val);
+	setBit(dev->syscfg, LEN_SYS_CFG, FFAM_BIT, val);
 }
 
 void dwSetFrameFilterAllowReserved(dwDevice_t* dev, bool val) {
-    setBit(dev->syscfg, LEN_SYS_CFG, FFAR_BIT, val);
+	setBit(dev->syscfg, LEN_SYS_CFG, FFAR_BIT, val);
 }
 
 void dwSetDoubleBuffering(dwDevice_t* dev, bool val) {
@@ -395,10 +395,10 @@ void dwClearInterrupts(dwDevice_t* dev) {
 
 void dwIdle(dwDevice_t* dev)
 {
-   memset(dev->sysctrl, 0, LEN_SYS_CTRL);
-   dev->sysctrl[0] |= 1<<TRXOFF_BIT;
-   dev->deviceMode = IDLE_MODE;
-   dwSpiWrite(dev, SYS_CTRL, NO_SUB, dev->sysctrl, LEN_SYS_CTRL);
+	 memset(dev->sysctrl, 0, LEN_SYS_CTRL);
+	 dev->sysctrl[0] |= 1<<TRXOFF_BIT;
+	 dev->deviceMode = IDLE_MODE;
+	 dwSpiWrite(dev, SYS_CTRL, NO_SUB, dev->sysctrl, LEN_SYS_CTRL);
 }
 
 void dwNewReceive(dwDevice_t* dev) {
@@ -431,8 +431,8 @@ void dwStartTransmit(dwDevice_t* dev) {
 		dev->deviceMode = RX_MODE;
 		dwStartReceive(dev);
 	} else if (dev->wait4resp) {
-    dev->deviceMode = RX_MODE;
-  } else {
+		dev->deviceMode = RX_MODE;
+	} else {
 		dev->deviceMode = IDLE_MODE;
 	}
 }
@@ -461,13 +461,13 @@ void dwCommitConfiguration(dwDevice_t* dev) {
 	// writeValueToBytes(antennaDelayBytes, 16384, LEN_STAMP);
 	// dev->antennaDelay.setTimestamp(antennaDelayBytes);
 	// dwSpiRead(dev, TX_ANTD, NO_SUB, antennaDelayBytes, LEN_TX_ANTD);
-  // dwSpiRead(dev, LDE_IF, LDE_RXANTD_SUB, antennaDelayBytes, LEN_LDE_RXANTD);
-  dwSpiWrite(dev, TX_ANTD, NO_SUB, dev->antennaDelay.raw, LEN_TX_ANTD);
-  dwSpiWrite(dev, LDE_IF, LDE_RXANTD_SUB, dev->antennaDelay.raw, LEN_LDE_RXANTD);
+	// dwSpiRead(dev, LDE_IF, LDE_RXANTD_SUB, antennaDelayBytes, LEN_LDE_RXANTD);
+	dwSpiWrite(dev, TX_ANTD, NO_SUB, dev->antennaDelay.raw, LEN_TX_ANTD);
+	dwSpiWrite(dev, LDE_IF, LDE_RXANTD_SUB, dev->antennaDelay.raw, LEN_LDE_RXANTD);
 }
 
 void dwWaitForResponse(dwDevice_t* dev, bool val) {
-  dev->wait4resp = val;
+	dev->wait4resp = val;
 	setBit(dev->sysctrl, LEN_SYS_CTRL, WAIT4RESP_BIT, val);
 }
 
@@ -476,7 +476,7 @@ void dwSuppressFrameCheck(dwDevice_t* dev, bool val) {
 }
 
 void dwUseSmartPower(dwDevice_t* dev, bool smartPower) {
-  dev->smartPower = smartPower;
+	dev->smartPower = smartPower;
 	setBit(dev->syscfg, LEN_SYS_CFG, DIS_STXP_BIT, !smartPower);
 }
 
@@ -487,19 +487,19 @@ dwTime_t dwSetDelay(dwDevice_t* dev, const dwTime_t* delay) {
 		setBit(dev->sysctrl, LEN_SYS_CTRL, RXDLYS_BIT, true);
 	} else {
 		// in idle, ignore
-    dwTime_t zero = {.full = 0};
+		dwTime_t zero = {.full = 0};
 		return zero;
 	}
 	uint8_t delayBytes[5];
 	dwTime_t futureTime;
 	dwGetSystemTimestamp(dev, &futureTime);
 	futureTime.full += delay->full;
-  memcpy(delayBytes, futureTime.raw, sizeof(futureTime.raw));
+	memcpy(delayBytes, futureTime.raw, sizeof(futureTime.raw));
 	delayBytes[0] = 0;
 	delayBytes[1] &= 0xFE;
 	dwSpiWrite(dev, DX_TIME, NO_SUB, delayBytes, LEN_DX_TIME);
 	// adjust expected time with configured antenna delay
-  memcpy(futureTime.raw, delayBytes, sizeof(futureTime.raw));
+	memcpy(futureTime.raw, delayBytes, sizeof(futureTime.raw));
 	futureTime.full += dev->antennaDelay.full;
 	return futureTime;
 }
@@ -510,10 +510,10 @@ void dwSetTxRxTime(dwDevice_t* dev, const dwTime_t futureTime) {
 	} else if(dev->deviceMode == RX_MODE) {
 		setBit(dev->sysctrl, LEN_SYS_CTRL, RXDLYS_BIT, true);
 	} else {
-    return;
+		return;
 	}
 	uint8_t delayBytes[5];
-  memcpy(delayBytes, futureTime.raw, sizeof(futureTime.raw));
+	memcpy(delayBytes, futureTime.raw, sizeof(futureTime.raw));
 	delayBytes[0] = 0;
 	delayBytes[1] &= 0xFE;
 	dwSpiWrite(dev, DX_TIME, NO_SUB, delayBytes, LEN_DX_TIME);
@@ -564,7 +564,7 @@ void dwSetPulseFrequency(dwDevice_t* dev, uint8_t freq) {
 }
 
 uint8_t dwGetPulseFrequency(dwDevice_t* dev) {
-    return dev->pulseFrequency;
+	return dev->pulseFrequency;
 }
 
 void dwSetPreambleLength(dwDevice_t* dev, uint8_t prealen) {
@@ -617,18 +617,18 @@ void dwSetDefaults(dwDevice_t* dev) {
 		dwUseExtendedFrameLength(dev, false);
 		dwUseSmartPower(dev, false);
 		dwSuppressFrameCheck(dev, false);
-    //for global frame filtering
+		//for global frame filtering
 		dwSetFrameFilter(dev, false);
-    //for data frame (poll, poll_ack, range, range report, range failed) filtering
-    dwSetFrameFilterAllowData(dev, false);
-    //for reserved (blink) frame filtering
-    dwSetFrameFilterAllowReserved(dev, false);
-    //setFrameFilterAllowMAC(true);
-    //setFrameFilterAllowBeacon(true);
-    //setFrameFilterAllowAcknowledgement(true);
+		//for data frame (poll, poll_ack, range, range report, range failed) filtering
+		dwSetFrameFilterAllowData(dev, false);
+		//for reserved (blink) frame filtering
+		dwSetFrameFilterAllowReserved(dev, false);
+		//setFrameFilterAllowMAC(true);
+		//setFrameFilterAllowBeacon(true);
+		//setFrameFilterAllowAcknowledgement(true);
 		dwInterruptOnSent(dev, true);
 		dwInterruptOnReceived(dev, true);
-    dwInterruptOnReceiveTimeout(dev, true);
+		dwInterruptOnReceiveTimeout(dev, true);
 		dwInterruptOnReceiveFailed(dev, false);
 		dwInterruptOnReceiveTimestampAvailable(dev, false);
 		dwInterruptOnAutomaticAcknowledgeTrigger(dev, false);
@@ -685,14 +685,14 @@ void dwGetTransmitTimestamp(dwDevice_t* dev, dwTime_t* time) {
 }
 
 void dwGetReceiveTimestamp(dwDevice_t* dev, dwTime_t* time) {
-  time->full = 0;
+	time->full = 0;
 	dwSpiRead(dev, RX_TIME, RX_STAMP_SUB, time->raw, LEN_RX_STAMP);
 	// correct timestamp (i.e. consider range bias)
 	dwCorrectTimestamp(dev, time);
 }
 
 void dwGetRawReceiveTimestamp(dwDevice_t* dev, dwTime_t* time) {
-  time->full = 0;
+	time->full = 0;
 	dwSpiRead(dev, RX_TIME, RX_STAMP_SUB, time->raw, LEN_RX_STAMP);
 }
 
@@ -700,7 +700,7 @@ void dwCorrectTimestamp(dwDevice_t* dev, dwTime_t* timestamp) {
 	// base line dBm, which is -61, 2 dBm steps, total 18 data points (down to -95 dBm)
 	float rxPowerBase = -(dwGetReceivePower(dev) + 61.0f) * 0.5f;
 	if (!isfinite(rxPowerBase)) {
-	  return;
+		return;
 	}
 	int rxPowerBaseLow = (int)rxPowerBase;
 	int rxPowerBaseHigh = rxPowerBaseLow + 1;
@@ -745,7 +745,7 @@ void dwCorrectTimestamp(dwDevice_t* dev, dwTime_t* timestamp) {
 	float rangeBias = rangeBiasLow + (rxPowerBase - rxPowerBaseLow) * (rangeBiasHigh - rangeBiasLow);
 	// range bias [mm] to timestamp modification value conversion
 	dwTime_t adjustmentTime;
-  adjustmentTime.full = (int)(rangeBias * DISTANCE_OF_RADIO_INV * 0.001f);
+	adjustmentTime.full = (int)(rangeBias * DISTANCE_OF_RADIO_INV * 0.001f);
 	// apply correction
 	timestamp->full -= adjustmentTime.full;
 }
@@ -798,12 +798,12 @@ bool dwIsClockProblem(dwDevice_t* dev) {
 
 void dwClearAllStatus(dwDevice_t* dev) {
 	memset(dev->sysstatus, 0, LEN_SYS_STATUS);
-  uint32_t reg = 0xffffffff;
+	uint32_t reg = 0xffffffff;
 	dwSpiWrite(dev, SYS_STATUS, NO_SUB,  &reg, LEN_SYS_STATUS);
 }
 
 void dwClearReceiveTimestampAvailableStatus(dwDevice_t* dev) {
-  uint8_t reg[LEN_SYS_STATUS] = {0};
+	uint8_t reg[LEN_SYS_STATUS] = {0};
 	setBit(reg, LEN_SYS_STATUS, LDEDONE_BIT, true);
 	dwSpiWrite(dev, SYS_STATUS, NO_SUB, reg, LEN_SYS_STATUS);
 }
@@ -838,7 +838,7 @@ static float spiReadRxInfo(dwDevice_t *dev) {
 }
 
 static float calculatePower(float base, float N, uint8_t pulseFrequency) {
-  float A, corrFac;
+	float A, corrFac;
 
 	if(TX_PULSE_FREQ_16MHZ == pulseFrequency) {
 		A = 113.77f;
@@ -861,21 +861,21 @@ static float calculatePower(float base, float N, uint8_t pulseFrequency) {
 }
 
 float dwGetFirstPathPower(dwDevice_t* dev) {
-  float f1 = (float)dwSpiRead16(dev, RX_TIME, FP_AMPL1_SUB);
-  float f2 = (float)dwSpiRead16(dev, RX_FQUAL, FP_AMPL2_SUB);
-  float f3 = (float)dwSpiRead16(dev, RX_FQUAL, FP_AMPL3_SUB);
-  float N = spiReadRxInfo(dev);
+	float f1 = (float)dwSpiRead16(dev, RX_TIME, FP_AMPL1_SUB);
+	float f2 = (float)dwSpiRead16(dev, RX_FQUAL, FP_AMPL2_SUB);
+	float f3 = (float)dwSpiRead16(dev, RX_FQUAL, FP_AMPL3_SUB);
+	float N = spiReadRxInfo(dev);
 
-  return calculatePower(f1 * f1 + f2 * f2 + f3 * f3, N, dev->pulseFrequency);
+	return calculatePower(f1 * f1 + f2 * f2 + f3 * f3, N, dev->pulseFrequency);
 }
 
 float dwGetReceivePower(dwDevice_t* dev) {
-  float C = (float)dwSpiRead16(dev, RX_FQUAL, CIR_PWR_SUB);
-  float N = spiReadRxInfo(dev);
+	float C = (float)dwSpiRead16(dev, RX_FQUAL, CIR_PWR_SUB);
+	float N = spiReadRxInfo(dev);
 
-  float twoPower17 = 131072.0f;
+	float twoPower17 = 131072.0f;
 
-  return calculatePower(C * twoPower17, N, dev->pulseFrequency);
+	return calculatePower(C * twoPower17, N, dev->pulseFrequency);
 }
 
 void dwEnableMode(dwDevice_t *dev, const uint8_t mode[]) {
@@ -1146,9 +1146,9 @@ void dwTune(dwDevice_t *dev) {
 		// TODO proper error/warning handling
 	}
 	// TX_POWER (enabled smart transmit power control)
-  if(dev->forceTxPower) {
-    writeValueToBytes(txpower, dev->txPower, LEN_TX_POWER);
-  } else if(dev->channel == CHANNEL_1 || dev->channel == CHANNEL_2) {
+	if(dev->forceTxPower) {
+		writeValueToBytes(txpower, dev->txPower, LEN_TX_POWER);
+	} else if(dev->channel == CHANNEL_1 || dev->channel == CHANNEL_2) {
 		if(dev->pulseFrequency == TX_PULSE_FREQ_16MHZ) {
 			if(dev->smartPower) {
 				writeValueToBytes(txpower, 0x15355575L, LEN_TX_POWER);
@@ -1232,14 +1232,14 @@ void dwTune(dwDevice_t *dev) {
 		// TODO proper error/warning handling
 	}
 	// Crystal calibration from OTP (if available)
-  uint8_t buf_otp[4];
-  readBytesOTP(dev, 0x01E, buf_otp);
-  if (buf_otp[0] == 0) {
-    // No trim value available from OTP, use midrange value of 0x10
-    writeValueToBytes(fsxtalt, ((0x10 & 0x1F) | 0x60), LEN_FS_XTALT);
-  } else {
-    writeValueToBytes(fsxtalt, ((buf_otp[0] & 0x1F) | 0x60), LEN_FS_XTALT);
-  }
+	uint8_t buf_otp[4];
+	readBytesOTP(dev, 0x01E, buf_otp);
+	if (buf_otp[0] == 0) {
+		// No trim value available from OTP, use midrange value of 0x10
+		writeValueToBytes(fsxtalt, ((0x10 & 0x1F) | 0x60), LEN_FS_XTALT);
+	} else {
+		writeValueToBytes(fsxtalt, ((buf_otp[0] & 0x1F) | 0x60), LEN_FS_XTALT);
+	}
 	// write configuration back to chip
 	dwSpiWrite(dev, AGC_TUNE, AGC_TUNE1_SUB, agctune1, LEN_AGC_TUNE1);
 	dwSpiWrite(dev, AGC_TUNE, AGC_TUNE2_SUB, agctune2, LEN_AGC_TUNE2);
@@ -1272,11 +1272,11 @@ void dwHandleInterrupt(dwDevice_t *dev) {
 		(*_handleError)();
 	}
 	if(dwIsTransmitDone(dev) && dev->handleSent != 0) {
-    dwClearTransmitStatus(dev);
+		dwClearTransmitStatus(dev);
 		(*dev->handleSent)(dev);
 	}
 	if(dwIsReceiveTimestampAvailable(dev) && _handleReceiveTimestampAvailable != 0) {
-    dwClearReceiveTimestampAvailableStatus(dev);
+		dwClearReceiveTimestampAvailableStatus(dev);
 		(*_handleReceiveTimestampAvailable)();
 	}
 	if(dwIsReceiveFailed(dev)) {
@@ -1300,7 +1300,7 @@ void dwHandleInterrupt(dwDevice_t *dev) {
 			}
 		}
 	} else if(dwIsReceiveDone(dev) && dev->handleReceived != 0) {
-    dwClearReceiveStatus(dev);
+		dwClearReceiveStatus(dev);
 		(*dev->handleReceived)(dev);
 		if(dev->permanentReceive) {
 			dwNewReceive(dev);
@@ -1311,37 +1311,37 @@ void dwHandleInterrupt(dwDevice_t *dev) {
 
 void dwSetTxPower(dwDevice_t *dev, uint32_t txPower)
 {
-  dev->forceTxPower = true;
-  dev->txPower = txPower;
+	dev->forceTxPower = true;
+	dev->txPower = txPower;
 }
 
 void dwAttachSentHandler(dwDevice_t *dev, dwHandler_t handler)
 {
-  dev->handleSent = handler;
+	dev->handleSent = handler;
 }
 
 void dwAttachReceivedHandler(dwDevice_t *dev, dwHandler_t handler)
 {
-  dev->handleReceived = handler;
+	dev->handleReceived = handler;
 }
 
 void dwAttachReceiveTimeoutHandler(dwDevice_t *dev, dwHandler_t handler) {
-  dev->handleReceiveTimeout = handler;
+	dev->handleReceiveTimeout = handler;
 }
 
 void dwAttachReceiveFailedHandler(dwDevice_t *dev, dwHandler_t handler) {
-  dev->handleReceiveFailed = handler;
+	dev->handleReceiveFailed = handler;
 }
 
 void dwSetAntenaDelay(dwDevice_t *dev, dwTime_t delay) {
-  dev->antennaDelay.full = delay.full;
+	dev->antennaDelay.full = delay.full;
 }
 
 char* dwStrError(int error)
 {
-  if (error == DW_ERROR_OK) return "No error";
-  else if (error == DW_ERROR_WRONG_ID) return "Wrong chip ID";
-  else return "Uknown error";
+	if (error == DW_ERROR_OK) return "No error";
+	else if (error == DW_ERROR_WRONG_ID) return "Wrong chip ID";
+	else return "Uknown error";
 }
 
 static void setBit(uint8_t data[], unsigned int n, unsigned int bit, bool val) {
@@ -1357,7 +1357,7 @@ static void setBit(uint8_t data[], unsigned int n, unsigned int bit, bool val) {
 	if(val) {
 		*targetByte |= (1<<shift);
 	} else {
-	  *targetByte &= ~(1<<shift);
+		*targetByte &= ~(1<<shift);
 	}
 }
 
