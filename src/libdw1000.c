@@ -1052,7 +1052,7 @@ void dwTune(dwDevice_t *dev) {
 		writeValueToBytes(fsplltune, 0x26, LEN_FS_PLLTUNE);
 	} else if(dev->channel == CHANNEL_3) {
 		writeValueToBytes(fspllcfg, 0x08401009L, LEN_FS_PLLCFG);
-		writeValueToBytes(fsplltune, 0x5E, LEN_FS_PLLTUNE);
+		writeValueToBytes(fsplltune, 0x56, LEN_FS_PLLTUNE);
 	} else if(dev->channel == CHANNEL_5 || dev->channel == CHANNEL_7) {
 		writeValueToBytes(fspllcfg, 0x0800041DL, LEN_FS_PLLCFG);
 		writeValueToBytes(fsplltune, 0xA6, LEN_FS_PLLTUNE);
