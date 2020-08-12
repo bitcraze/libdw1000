@@ -162,7 +162,7 @@ void testGdwGetFirstPathPowerAt16MHzLowPower() {
   // Test
   // Assert
   verifyGdwGetFirstPathPower(fpAmpl1, fpAmpl2, fpAmpl3,
-    rxFrameInfo, TX_PULSE_FREQ_16MHZ, -89.147507);
+    rxFrameInfo, TX_PULSE_FREQ_16MHZ, -85.324951);
 }
 
 void testGdwGetFirstPathPowerAt16MHzHighPower() {
@@ -175,7 +175,7 @@ void testGdwGetFirstPathPowerAt16MHzHighPower() {
   // Test
   // Assert
   verifyGdwGetFirstPathPower(fpAmpl1, fpAmpl2, fpAmpl3,
-    rxFrameInfo, TX_PULSE_FREQ_16MHZ, -49.799316);
+    rxFrameInfo, TX_PULSE_FREQ_16MHZ, -43.299194);
 }
 
 void testGdwGetFirstPathPowerAt64MHzHighPower() {
@@ -188,7 +188,7 @@ void testGdwGetFirstPathPowerAt64MHzHighPower() {
   // Test
   // Assert
   verifyGdwGetFirstPathPower(fpAmpl1, fpAmpl2, fpAmpl3,
-    rxFrameInfo, TX_PULSE_FREQ_64MHZ, -76.213196);
+    rxFrameInfo, TX_PULSE_FREQ_64MHZ, -76.213211);
 }
 
 
@@ -201,7 +201,7 @@ void testGetReceivePowerAt16MHzLowPower() {
 
   // Test
   // Assert
-  verifyGetReceivePower(cirPwr, rxFrameInfo, TX_PULSE_FREQ_16MHZ, -88.434113);
+  verifyGetReceivePower(cirPwr, rxFrameInfo, TX_PULSE_FREQ_16MHZ, -82.946953);
 }
 
 void testGetReceivePowerAt16MHzHighPower() {
@@ -211,7 +211,7 @@ void testGetReceivePowerAt16MHzHighPower() {
 
   // Test
   // Assert
-  verifyGetReceivePower(cirPwr, rxFrameInfo, TX_PULSE_FREQ_16MHZ, -58.137367);
+  verifyGetReceivePower(cirPwr, rxFrameInfo, TX_PULSE_FREQ_16MHZ, -51.637222);
 }
 
 void testGetReceivePowerAt64MHzLowPower() {
