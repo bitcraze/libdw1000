@@ -83,8 +83,11 @@ void dwInit(dwDevice_t* dev, dwOps_t* ops)
 
 	// Dummy callback handlers
 	dev->handleSent = dummy;
+	dev->handleError = dummy;
 	dev->handleReceived = dummy;
+	dev->handleReceiveTimeout = dummy;
 	dev->handleReceiveFailed = dummy;
+	dev->handleReceiveTimestampAvailable = dummy;
 
 }
 
@@ -1261,23 +1264,19 @@ void dwTune(dwDevice_t *dev) {
 	dwSpiWrite(dev, FS_CTRL, FS_XTALT_SUB, fsxtalt, LEN_FS_XTALT);
 }
 
-// FIXME: This is a test!
-void (*_handleError)(void) = dummy;
-void (*_handleReceiveTimestampAvailable)(void) = dummy;
-
 void dwHandleInterrupt(dwDevice_t *dev) {
 	// read current status and handle via callbacks
 	dwReadSystemEventStatusRegister(dev);
-	if(dwIsClockProblem(dev) /* TODO and others */ && _handleError != 0) {
-		(*_handleError)();
+	if(dwIsClockProblem(dev) /* TODO and others */ && dev->handleError != 0) {
+		(*dev->handleError)(dev);
 	}
 	if(dwIsTransmitDone(dev) && dev->handleSent != 0) {
 		dwClearTransmitStatus(dev);
 		(*dev->handleSent)(dev);
 	}
-	if(dwIsReceiveTimestampAvailable(dev) && _handleReceiveTimestampAvailable != 0) {
+	if(dwIsReceiveTimestampAvailable(dev) && dev->handleReceiveTimestampAvailable != 0) {
 		dwClearReceiveTimestampAvailableStatus(dev);
-		(*_handleReceiveTimestampAvailable)();
+		(*dev->handleReceiveTimestampAvailable)(dev);
 	}
 	if(dwIsReceiveFailed(dev)) {
 		dwClearReceiveStatus(dev);
@@ -1315,13 +1314,15 @@ void dwSetTxPower(dwDevice_t *dev, uint32_t txPower)
 	dev->txPower = txPower;
 }
 
-void dwAttachSentHandler(dwDevice_t *dev, dwHandler_t handler)
-{
+void dwAttachSentHandler(dwDevice_t *dev, dwHandler_t handler) {
 	dev->handleSent = handler;
 }
 
-void dwAttachReceivedHandler(dwDevice_t *dev, dwHandler_t handler)
-{
+void dwAttachErrorHandler(dwDevice_t *dev, dwHandler_t handler) {
+	dev->handleError = handler;
+}
+
+void dwAttachReceivedHandler(dwDevice_t *dev, dwHandler_t handler) {
 	dev->handleReceived = handler;
 }
 
@@ -1331,6 +1332,10 @@ void dwAttachReceiveTimeoutHandler(dwDevice_t *dev, dwHandler_t handler) {
 
 void dwAttachReceiveFailedHandler(dwDevice_t *dev, dwHandler_t handler) {
 	dev->handleReceiveFailed = handler;
+}
+
+void dwAttachReceiveTimestampAvailable(dwDevice_t *dev, dwHandler_t handler) {
+	dev->handleReceiveTimestampAvailable = handler;
 }
 
 void dwSetAntenaDelay(dwDevice_t *dev, dwTime_t delay) {

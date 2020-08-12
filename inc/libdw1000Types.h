@@ -79,9 +79,11 @@ typedef struct dwDevice_s {
 
 	// Callback handles
 	dwHandler_t handleSent;
+	dwHandler_t handleError;
 	dwHandler_t handleReceived;
 	dwHandler_t handleReceiveTimeout;
 	dwHandler_t handleReceiveFailed;
+	dwHandler_t handleReceiveTimestampAvailable;
 
 	// settings
 	uint32_t txPower;
