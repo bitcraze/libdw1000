@@ -1,4 +1,4 @@
-# Libdw1000  [![Build Status](https://api.travis-ci.org/bitcraze/libdw1000.svg)](https://travis-ci.org/bitcraze/libdw1000)
+# Libdw1000  [![CI](https://github.com/bitcraze/libdw1000/workflows/CI/badge.svg)](https://github.com/bitcraze/libdw1000/actions?query=workflow%3ACI)
 
 Open source driver implementation for the Decawave DW1000 UWB radio chip
 
