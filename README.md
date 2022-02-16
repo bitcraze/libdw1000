@@ -165,3 +165,11 @@ with the docker builder image
 
 
 [1]: https://github.com/thotro/arduino-dw1000
+
+## Contribute
+Go to the [contribute page](https://www.bitcraze.io/contribute/) on our website to learn more.
+
+### Test code for contribution
+Run the automated build locally to test your code
+
+	./tools/build/build
