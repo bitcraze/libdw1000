@@ -2,7 +2,7 @@
 
 Open source driver implementation for the Decawave DW1000 UWB radio chip
 
-This driver is mainly a port of the [Arduino DW1000 driver][1]. As such is is
+This driver is mainly a port of the [Arduino DW1000 driver][1]. As such it is
 licensed under the same license, Apache2.
 
 ## Usage
