@@ -226,7 +226,10 @@ void dwEnableClock(dwDevice_t* dev, dwClock_t clock) {
 		pmscctrl0[0] &= 0xFC;
 		pmscctrl0[0] |= dwClockXti;
 	} else if(clock == dwClockPll) {
-		dev->ops->spiSetSpeed(dev, dwSpiSpeedHigh);
+		// Do NOT switch SPI to high speed here: the chip is still in XTI mode
+		// (max 3 MHz SPI) until the write below takes effect and the PLL locks.
+		// Switch to high speed after the write so the PLL-enable transaction is
+		// within spec.
 		pmscctrl0[0] &= 0xFC;
 		pmscctrl0[0] |= dwClockPll;
 	} else {
@@ -234,6 +237,12 @@ void dwEnableClock(dwDevice_t* dev, dwClock_t clock) {
 	}
 	dwSpiWrite(dev, PMSC, PMSC_CTRL0_SUB, pmscctrl0, 1);
 	dwSpiWrite(dev, PMSC, PMSC_CTRL0_SUB, pmscctrl0, LEN_PMSC_CTRL0);
+	// After writing PLL-enable, switch to high SPI speed.
+	// The caller (dwConfigure) already waits 5 ms for PLL lock before any
+	// further SPI traffic, so this ordering is safe.
+	if (clock == dwClockPll) {
+		dev->ops->spiSetSpeed(dev, dwSpiSpeedHigh);
+	}
 }
 
 void dwSoftReset(dwDevice_t* dev)
